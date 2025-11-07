@@ -1,3 +1,5 @@
+/**/
+
 import type { School } from "./types"
 
 export const mockSchools: School[] = [
