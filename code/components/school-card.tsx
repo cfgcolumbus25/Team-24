@@ -16,7 +16,7 @@ interface SchoolCardProps {
 }
 
 export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: SchoolCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true) // Start expanded to show courses by default
 
   return (
     <Card
