@@ -6,6 +6,8 @@ import { LocationFilter } from "./location-filter"
 import { CourseFilter } from "./course-filter"
 import { SchoolList } from "./school-list"
 import { MapContainer } from "./map-container"
+import { ComparisonButton } from "./comparison-button"
+import { SchoolComparison } from "./school-comparison"
 import type { School, SelectedCourse, LocationType, SortOption } from "@/lib/types"
 import { calculateDistance } from "@/lib/distance"
 
@@ -20,6 +22,7 @@ export function CLEPPathFinder() {
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null)
   const [isLoadingSchools, setIsLoadingSchools] = useState(false)
   const [favoritedSchools, setFavoritedSchools] = useState<Set<number>>(new Set())
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false)
 
   const fetchSchools = async (filterState?: string) => {
     setIsLoadingSchools(true)
@@ -122,6 +125,46 @@ export function CLEPPathFinder() {
     })
   }, [allSchools])
 
+  // Remove favorited schools that don't match course filter when courses are added/changed
+  // Course filter takes priority over favoriting
+  useEffect(() => {
+    if (selectedCourses.length === 0) {
+      return // No filtering when no courses selected
+    }
+
+    setFavoritedSchools((prev) => {
+      const updated = new Set<number>()
+      let hasChanges = false
+
+      prev.forEach((schoolId) => {
+        const school = allSchools.find((s) => s.id === schoolId)
+        if (!school) {
+          // School not in current list, remove it
+          hasChanges = true
+          localStorage.removeItem(`favorite_${schoolId}`)
+          return
+        }
+
+        // Check if school accepts at least one of the selected courses with the user's score
+        const matchesFilter = selectedCourses.some((course) => {
+          const policy = school.policies.find((p) => p.examId === course.examId)
+          return policy && course.score >= policy.minScore
+        })
+
+        if (matchesFilter) {
+          // School matches filter, keep it favorited
+          updated.add(schoolId)
+        } else {
+          // School doesn't match filter, remove from favorites
+          hasChanges = true
+          localStorage.removeItem(`favorite_${schoolId}`)
+        }
+      })
+
+      return hasChanges ? updated : prev
+    })
+  }, [selectedCourses, allSchools])
+
   const getApproxCoordsFromZip = (zip: string): { lat: number; lng: number } | null => {
     const firstDigit = Number.parseInt(zip[0])
     // Rough approximation of US regions by ZIP code prefix
@@ -166,6 +209,39 @@ export function CLEPPathFinder() {
     })
   }
 
+  // Get favorited schools as an array
+  const favoritedSchoolsArray = useMemo(() => {
+    return allSchools.filter((school) => favoritedSchools.has(school.id))
+  }, [allSchools, favoritedSchools])
+
+  // Handlers for comparison dialog
+  const handleOpenComparison = () => {
+    setIsComparisonOpen(true)
+  }
+
+  const handleCloseComparison = () => {
+    setIsComparisonOpen(false)
+  }
+
+  const handleRemoveFromComparison = (schoolId: number) => {
+    // Remove from favorites
+    setFavoritedSchools((prev) => {
+      const newSet = new Set(prev)
+      newSet.delete(schoolId)
+      return newSet
+    })
+    // Remove from localStorage
+    localStorage.removeItem(`favorite_${schoolId}`)
+  }
+
+  const handleClearAllFavorites = () => {
+    // Clear all favorites
+    favoritedSchools.forEach((schoolId) => {
+      localStorage.removeItem(`favorite_${schoolId}`)
+    })
+    setFavoritedSchools(new Set())
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -180,6 +256,12 @@ export function CLEPPathFinder() {
 
             <div className="p-6 border-b border-border bg-card">
               <CourseFilter selectedCourses={selectedCourses} onCoursesChange={setSelectedCourses} />
+              <div className="flex justify-end mt-4">
+                <ComparisonButton
+                  favoriteCount={favoritedSchools.size}
+                  onClick={handleOpenComparison}
+                />
+              </div>
             </div>
 
             <SchoolList
@@ -207,6 +289,15 @@ export function CLEPPathFinder() {
           />
         </div>
       </div>
+
+      {/* Comparison Dialog */}
+      <SchoolComparison
+        schools={favoritedSchoolsArray}
+        isOpen={isComparisonOpen}
+        onClose={handleCloseComparison}
+        onRemoveSchool={handleRemoveFromComparison}
+        onClearAll={handleClearAllFavorites}
+      />
     </div>
   )
 }

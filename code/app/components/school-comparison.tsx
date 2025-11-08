@@ -50,7 +50,7 @@ export function SchoolComparison({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="!max-w-[98vw] w-full max-h-[90vh] overflow-y-auto !z-[9999]">
         <DialogHeader>
           <DialogTitle>Compare Schools</DialogTitle>
           <DialogDescription>
@@ -76,15 +76,15 @@ export function SchoolComparison({
           </div>
 
           {/* Comparison Table */}
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
+          <div className="border rounded-lg overflow-x-auto w-full">
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[200px] sticky left-0 bg-background z-10">
                     <div className="font-semibold">Comparison</div>
                   </TableHead>
                   {schools.map((school) => (
-                    <TableHead key={school.id} className="min-w-[250px]">
+                    <TableHead key={school.id} className="w-[180px] min-w-[150px]">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm mb-1">{school.name}</div>
