@@ -1,48 +1,60 @@
-// Client-side auth utilities
 
-/*Retrieves stored login token*/
-export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null
-  return localStorage.getItem("admin_token")
+export interface UniversityInfo {
+    id: string
+    name: string
 }
 
-/*Gets logged University info*/
-export function getUniversityInfo(): { id: string; name: string } | null {
-  if (typeof window === "undefined") return null
+export async function getUniversityInfo(): Promise<UniversityInfo | null> {
+    try {
+        const response = await fetch('/api/auth/session')
 
-  const id = localStorage.getItem("university_id")
-  const name = localStorage.getItem("university_name")
+        if (!response.ok) {
+            return null
+        }
 
-  if (!id || !name) return null
+        const data = await response.json()
 
-  return { id, name }
+        if (!data.authenticated) {
+            return null
+        }
+
+        return {
+            id: data.user.id.toString(),
+            name: data.user.username,
+        }
+    } catch (error) {
+        console.error('Failed to get university info:', error)
+        return null
+    }
 }
 
-/*Clears the auth token*/
-export function clearAuth(): void {
-  if (typeof window === "undefined") return
-
-  localStorage.removeItem("admin_token")
-  localStorage.removeItem("university_name")
-  localStorage.removeItem("university_id")
+export async function clearAuth(): Promise<void> {
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+        })
+    } catch (error) {
+        console.error('Failed to clear auth:', error)
+    }
 }
 
+export async function isAuthenticated(): Promise<boolean> {
+    const info = await getUniversityInfo()
+    return info !== null
+}
 
-/*Checks if user is still logged in*/
 export async function verifyAuth(): Promise<boolean> {
-  const token = getAuthToken()
+    try {
+        const response = await fetch('/api/auth/session')
 
-  if (!token) return false
+        if (!response.ok) {
+            return false
+        }
 
-  try {
-    const response = await fetch("/api/auth/verify", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-
-    return response.ok
-  } catch {
-    return false
-  }
+        const data = await response.json()
+        return data.authenticated === true
+    } catch (error) {
+        console.error('Failed to verify auth:', error)
+        return false
+    }
 }

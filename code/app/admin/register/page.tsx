@@ -3,43 +3,71 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Label } from "@/app/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Alert, AlertDescription } from "@/app/components/ui/alert"
 import { GraduationCap, Loader2 } from "lucide-react"
-import Link from "next/link";
 
-export default function AdminLoginPage() {
+export default function AdminRegisterPage() {
     const router = useRouter()
+    const [username, setUsername] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState("")
     const [isLoading, setIsLoading] = useState(false)
+
+    const validateEduEmail = (email: string): boolean => {
+        const eduEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu$/
+        return eduEmailRegex.test(email)
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError("")
+
+        // Validation
+        if (username.length < 3) {
+            setError("Username must be at least 3 characters long")
+            return
+        }
+
+        if (!validateEduEmail(email)) {
+            setError("Please use a valid .edu email address")
+            return
+        }
+
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters long")
+            return
+        }
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match")
+            return
+        }
+
         setIsLoading(true)
 
         try {
-            const response = await fetch("/api/auth/login", {
+            const response = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ username, email, password }),
             })
 
             const data = await response.json()
 
             if (!response.ok) {
-                setError(data.error || "Login failed")
+                setError(data.error || "Registration failed")
                 setIsLoading(false)
                 return
             }
 
-            // Session is stored server-side in HTTP-only cookie
-            // Just redirect to admin dashboard
+            // Registration successful - redirect to admin dashboard
             router.push("/admin")
             router.refresh()
         } catch (err) {
@@ -55,8 +83,10 @@ export default function AdminLoginPage() {
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                         <GraduationCap className="w-8 h-8 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl">University Admin Login</CardTitle>
-                    <CardDescription>Sign in to manage your institution's CLEP credit policies</CardDescription>
+                    <CardTitle className="text-2xl">University Admin Registration</CardTitle>
+                    <CardDescription>
+                        Create an account to manage your institution's CLEP credit policies
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -67,16 +97,36 @@ export default function AdminLoginPage() {
                         )}
 
                         <div className="space-y-2">
+                            <Label htmlFor="username">Username</Label>
+                            <Input
+                                id="username"
+                                type="text"
+                                placeholder="admin"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                                disabled={isLoading}
+                                minLength={3}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Minimum 3 characters
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
                             <Label htmlFor="email">University Email</Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@example.edu"
+                                placeholder="admin@university.edu"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 disabled={isLoading}
                             />
+                            <p className="text-xs text-muted-foreground">
+                                Must be a .edu email address
+                            </p>
                         </div>
 
                         <div className="space-y-2">
@@ -88,6 +138,23 @@ export default function AdminLoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 disabled={isLoading}
+                                minLength={6}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Minimum 6 characters
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Input
+                                id="confirmPassword"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                                disabled={isLoading}
+                                minLength={6}
                             />
                         </div>
 
@@ -95,22 +162,19 @@ export default function AdminLoginPage() {
                             {isLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Signing in...
+                                    Creating account...
                                 </>
                             ) : (
-                                "Sign In"
+                                "Create Account"
                             )}
                         </Button>
+
                         <div className="text-center text-sm">
-                            <span className="text-muted-foreground">Don't have an account? </span>
-                            <Link href="/admin/register" className="text-primary hover:underline font-medium">
-                                Register here
+                            <span className="text-muted-foreground">Already have an account? </span>
+                            <Link href="/admin/login" className="text-primary hover:underline font-medium">
+                                Sign in
                             </Link>
                         </div>
-
-                        <p className="text-xs text-center text-muted-foreground">
-                            Demo credentials: admin@example.edu / password123
-                        </p>
                     </form>
                 </CardContent>
             </Card>
