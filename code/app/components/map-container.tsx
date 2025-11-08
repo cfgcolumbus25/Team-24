@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { MapPin } from "lucide-react"
 import type { School } from "@/lib/types"
 import "leaflet/dist/leaflet.css"
@@ -19,6 +19,12 @@ export function MapContainer({ schools, center, radius, selectedSchoolId, onScho
   const markersRef = useRef<any[]>([])
   const circleRef = useRef<any>(null)
   const [isClient, setIsClient] = useState(false)
+  const ensureMapSize = useCallback(() => {
+    if (typeof window === "undefined") return
+    window.requestAnimationFrame(() => {
+      mapInstanceRef.current?.invalidateSize?.()
+    })
+  }, [])
 
   useEffect(() => {
     setIsClient(true)
@@ -27,8 +33,8 @@ export function MapContainer({ schools, center, radius, selectedSchoolId, onScho
   useEffect(() => {
     if (!isClient || !mapRef.current) return
 
-    // Dynamically import Leaflet only on client side
     import("leaflet").then((L) => {
+      // Dynamically import Leaflet only on client side
       // Fix for default marker icons in Leaflet
       delete (L.Icon.Default.prototype as any)._getIconUrl
       L.Icon.Default.mergeOptions({
@@ -79,6 +85,8 @@ export function MapContainer({ schools, center, radius, selectedSchoolId, onScho
       const map = mapInstanceRef.current
       if (!map) return
 
+      ensureMapSize()
+
       // Clear existing markers
       markersRef.current.forEach((marker) => marker.remove())
       markersRef.current = []
@@ -92,13 +100,14 @@ export function MapContainer({ schools, center, radius, selectedSchoolId, onScho
       if (schools.length === 0 || !center) {
         // Reset to default view
         map.setView([39.8283, -98.5795], 4)
+        ensureMapSize()
         return
       }
 
       // Draw radius circle if specified
       if (radius && center) {
         const circle = L.circle([center.lat, center.lng], {
-          radius: radius * 1609.34, // Convert miles to meters
+          radius: radius * 1609.34,
           fillColor: "#3b82f6",
           fillOpacity: 0.1,
           color: "#3b82f6",
@@ -136,11 +145,32 @@ export function MapContainer({ schools, center, radius, selectedSchoolId, onScho
       if (schools.length > 0) {
         const bounds = L.latLngBounds(schools.map((s) => [s.latitude, s.longitude]))
         map.fitBounds(bounds, { padding: [50, 50] })
+        ensureMapSize()
       } else if (center) {
         map.setView([center.lat, center.lng], 10)
+        ensureMapSize()
       }
     })
-  }, [isClient, schools, center, radius, selectedSchoolId, onSchoolSelect])
+  }, [isClient, schools, center, radius, selectedSchoolId, onSchoolSelect, ensureMapSize])
+
+  useEffect(() => {
+    if (!isClient || !mapRef.current) return
+
+    const target = mapRef.current
+    let resizeObserver: ResizeObserver | null = null
+
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => ensureMapSize())
+      resizeObserver.observe(target)
+    }
+
+    window.addEventListener("resize", ensureMapSize)
+
+    return () => {
+      resizeObserver?.disconnect()
+      window.removeEventListener("resize", ensureMapSize)
+    }
+  }, [isClient, ensureMapSize])
 
   // Cleanup on unmount
   useEffect(() => {

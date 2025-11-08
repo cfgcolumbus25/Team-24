@@ -142,27 +142,29 @@ export function CLEPPathFinder() {
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Left Panel - Filters and School List */}
         <div className="w-full lg:w-2/5 border-r border-border flex flex-col">
-          <div className="p-6 border-b border-border bg-card">
-            <LocationFilter locationType={locationType} location={location} onLocationChange={handleLocationChange} />
-          </div>
+          <div className="lg:h-[calc(100vh-5rem)] lg:overflow-y-auto">
+            <div className="p-6 border-b border-border bg-card">
+              <LocationFilter locationType={locationType} location={location} onLocationChange={handleLocationChange} />
+            </div>
 
-          <div className="p-6 border-b border-border bg-card">
-            <CourseFilter selectedCourses={selectedCourses} onCoursesChange={setSelectedCourses} />
-          </div>
+            <div className="p-6 border-b border-border bg-card">
+              <CourseFilter selectedCourses={selectedCourses} onCoursesChange={setSelectedCourses} />
+            </div>
 
-          <SchoolList
-            schools={filteredSchools}
-            selectedCourses={selectedCourses}
-            sortBy={sortBy}
-            onSortChange={handleSortChange}
-            selectedSchoolId={selectedSchoolId}
-            onSchoolSelect={setSelectedSchoolId}
-            isLoading={isLoadingSchools}
-          />
+            <SchoolList
+              schools={filteredSchools}
+              selectedCourses={selectedCourses}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              selectedSchoolId={selectedSchoolId}
+              onSchoolSelect={setSelectedSchoolId}
+              isLoading={isLoadingSchools}
+            />
+          </div>
         </div>
 
         {/* Right Panel - Map */}
-        <div className="w-full lg:w-3/5 h-[400px] lg:h-auto">
+        <div className="w-full lg:w-3/5 h-[400px] lg:h-[calc(100vh-5rem)]">
           <MapContainer
             schools={filteredSchools}
             center={centerCoords}
