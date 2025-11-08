@@ -30,8 +30,7 @@ export function AdminDashboard() {
 
     const loadPolicies = async (universityId: string) => {
         try {
-            //changed from /api/admin/policies to /api/policies
-            const response = await fetch(`/api/policies?universityId=${universityId}`, {
+            const response = await fetch(`/api/admin/policies?universityId=${universityId}`, {
                 credentials: "include", //added this
             })
             if (response.ok) {
@@ -64,8 +63,7 @@ export function AdminDashboard() {
         if (!universityInfo) return
 
         try {
-            //changed from /api/admin/policies to /api/policies
-            const url = editingPolicy ? `/api/policies/${editingPolicy.id}` : `/api/policies`
+            const url = editingPolicy ? `/api/admin/policies/${editingPolicy.id}` : `/api/admin/policies`
 
             const response = await fetch(url, {
                 method: editingPolicy ? "PUT" : "POST",
@@ -93,8 +91,7 @@ export function AdminDashboard() {
         if (!confirm("Are you sure you want to delete this policy?")) return
 
         try {
-            //changed from /api/admin/policies to /api/policies
-            const response = await fetch(`/api/policies/${policyId}`, {
+            const response = await fetch(`/api/admin/policies/${policyId}`, {
                 method: "DELETE",
                 credentials: "include", //added this
             })

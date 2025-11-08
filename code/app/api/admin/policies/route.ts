@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
         //fetch school from backend
         console.log("Fetching from backend:", `${BACKEND_URL}/api/schools/${universityId}`)
-        const response = await fetch(`${BACKEND_URL}/api/schools/${universityId}`)
+        const response = await fetch(`${BACKEND_URL}/api/schools/${universityId}`, { cache: "no-store" })
 
         console.log("Backend response status:", response.status)
 
