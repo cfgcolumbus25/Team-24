@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +17,61 @@ interface SchoolCardProps {
 }
 
 export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: SchoolCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false) 
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [votes, setVotes] = useState(school.votes || { upvotes: 0, downvotes: 0 })
+  const [userVote, setUserVote] = useState<"upvote" | "downvote" | null>(null)
+  const [isVoting, setIsVoting] = useState(false)
+
+  // Load user's previous vote from localStorage
+  useEffect(() => {
+    const savedVote = localStorage.getItem(`vote_${school.id}`)
+    if (savedVote === "upvote" || savedVote === "downvote") {
+      setUserVote(savedVote)
+    }
+  }, [school.id])
+
+  // Update votes when school prop changes
+  useEffect(() => {
+    setVotes(school.votes || { upvotes: 0, downvotes: 0 })
+  }, [school.votes])
+
+  const handleVote = async (voteType: "upvote" | "downvote") => {
+    setIsVoting(true)
+    try {
+      // If clicking the same button, remove the vote (unlike/undownvote)
+      // If clicking different button, switch the vote
+      const newVote = userVote === voteType ? null : voteType
+
+      const response = await fetch(`/api/schools/${school.id}/vote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          voteType,
+          previousVote: userVote 
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to submit vote")
+      }
+
+      const data = await response.json()
+      setVotes(data.votes)
+      setUserVote(newVote)
+      
+      if (newVote) {
+        localStorage.setItem(`vote_${school.id}`, newVote)
+      } else {
+        localStorage.removeItem(`vote_${school.id}`)
+      }
+    } catch (error) {
+      console.error("Error submitting vote:", error)
+    } finally {
+      setIsVoting(false)
+    }
+  }
 
   return (
     <Card
@@ -37,9 +91,51 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground text-base leading-snug mb-1 group-hover:text-primary transition-colors">
-                  {school.name}
-                </h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-foreground text-base leading-snug group-hover:text-primary transition-colors">
+                    {school.name}
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={cn(
+                        "h-7 px-2 hover:bg-success/10",
+                        userVote === "upvote" && "bg-success/20 text-success"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleVote("upvote")
+                      }}
+                      disabled={isVoting}
+                    >
+                      <ThumbsUp className={cn(
+                        "w-4 h-4",
+                        userVote === "upvote" && "fill-current"
+                      )} />
+                      <span className="ml-1 text-xs font-medium">{votes.upvotes}</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={cn(
+                        "h-7 px-2 hover:bg-destructive/10",
+                        userVote === "downvote" && "bg-destructive/20 text-destructive"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleVote("downvote")
+                      }}
+                      disabled={isVoting}
+                    >
+                      <ThumbsDown className={cn(
+                        "w-4 h-4",
+                        userVote === "downvote" && "fill-current"
+                      )} />
+                      <span className="ml-1 text-xs font-medium">{votes.downvotes}</span>
+                    </Button>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -73,18 +169,6 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
                 </a>
               )}
 
-              {school.votes && (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="gap-1 text-xs">
-                    <ThumbsUp className="w-3 h-3 text-success" />
-                    {school.votes.upvotes}
-                  </Badge>
-                  <Badge variant="outline" className="gap-1 text-xs">
-                    <ThumbsDown className="w-3 h-3 text-destructive" />
-                    {school.votes.downvotes}
-                  </Badge>
-                </div>
-              )}
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { mockSchools } from "@/lib/mock-data"
+import { schoolsStore } from "@/lib/schools-store"
 
 // In production, this would query a real database
 // For now, we use the same in-memory store as the admin panel
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get("state")
     const zip = searchParams.get("zip")
 
-    let schools = [...mockSchools]
+    let schools = [...schoolsStore]
 
     // Filter by state if provided
     if (state) {
