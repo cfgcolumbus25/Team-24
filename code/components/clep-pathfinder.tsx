@@ -20,6 +20,13 @@ export function CLEPPathFinder() {
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null)
   const [isLoadingSchools, setIsLoadingSchools] = useState(false)
 
+  useEffect(() => {
+    console.log("=== DEBUG INFO ===")
+    console.log("Selected Courses:", selectedCourses)
+    console.log("All Schools Count:", allSchools.length)
+    console.log("Filtered Schools Count:", filteredSchools.length)
+  }, [selectedCourses, allSchools, filteredSchools])
+
   const fetchSchools = async (filterState?: string) => {
     setIsLoadingSchools(true)
     try {
@@ -89,8 +96,16 @@ export function CLEPPathFinder() {
         // Check if school accepts at least one of the selected courses with the user's score
         return selectedCourses.some((course) => {
           const policy = school.policies.find((p) => p.examId === course.examId)
-          // School accepts the course if it has a policy and user's score meets the requirement
-          return policy && course.score >= policy.minScore
+          if (!policy) return false
+        
+          // If no score provided, just check if school accepts the exam
+          if (course.score === undefined) {
+            return true
+          }
+                  
+        // If score provided, check if it meets the minimum requirement
+        return course.score >= policy.minScore
+
         })
       })
     }
