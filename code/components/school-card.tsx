@@ -36,19 +36,21 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
   }, [school.votes])
 
   const handleVote = async (voteType: "upvote" | "downvote") => {
-    // Prevent voting if already voted
-    if (userVote !== null) {
-      return
-    }
-
     setIsVoting(true)
     try {
+      // If clicking the same button, remove the vote (unlike/undownvote)
+      // If clicking different button, switch the vote
+      const newVote = userVote === voteType ? null : voteType
+
       const response = await fetch(`/api/schools/${school.id}/vote`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ voteType }),
+        body: JSON.stringify({ 
+          voteType,
+          previousVote: userVote 
+        }),
       })
 
       if (!response.ok) {
@@ -57,8 +59,13 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
 
       const data = await response.json()
       setVotes(data.votes)
-      setUserVote(voteType)
-      localStorage.setItem(`vote_${school.id}`, voteType)
+      setUserVote(newVote)
+      
+      if (newVote) {
+        localStorage.setItem(`vote_${school.id}`, newVote)
+      } else {
+        localStorage.removeItem(`vote_${school.id}`)
+      }
     } catch (error) {
       console.error("Error submitting vote:", error)
     } finally {
@@ -100,7 +107,7 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
                         e.stopPropagation()
                         handleVote("upvote")
                       }}
-                      disabled={isVoting || userVote !== null}
+                      disabled={isVoting}
                     >
                       <ThumbsUp className={cn(
                         "w-4 h-4",
@@ -119,7 +126,7 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
                         e.stopPropagation()
                         handleVote("downvote")
                       }}
-                      disabled={isVoting || userVote !== null}
+                      disabled={isVoting}
                     >
                       <ThumbsDown className={cn(
                         "w-4 h-4",
