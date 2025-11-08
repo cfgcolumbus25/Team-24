@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card } from "@/app/components/ui/card"
 import { Button } from "@/app/components/ui/button"
 import { Badge } from "@/app/components/ui/badge"
-import { ChevronDown, ChevronUp, ExternalLink, MapPin, ThumbsUp, ThumbsDown } from "lucide-react"
+import { ChevronDown, ChevronUp, ExternalLink, MapPin, ThumbsUp, ThumbsDown, Star } from "lucide-react"
 import { SchoolDetails } from "./school-details"
 import type { School, SelectedCourse } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -14,26 +14,37 @@ interface SchoolCardProps {
   selectedCourses: SelectedCourse[]
   isSelected: boolean
   onSelect: () => void
+  isFavorited?: boolean
+  onFavoriteToggle?: (schoolId: number, isFavorited: boolean) => void
 }
 
-export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: SchoolCardProps) {
+export function SchoolCard({ 
+  school, 
+  selectedCourses, 
+  isSelected, 
+  onSelect,
+  isFavorited = false,
+  onFavoriteToggle
+}: SchoolCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [votes, setVotes] = useState(school.votes || { upvotes: 0, downvotes: 0 })
   const [userVote, setUserVote] = useState<"upvote" | "downvote" | null>(null)
   const [isVoting, setIsVoting] = useState(false)
+  const [favorited, setFavorited] = useState(isFavorited)
 
-  // Load user's previous vote from localStorage
+  // Load favorite status from localStorage
   useEffect(() => {
-    const savedVote = localStorage.getItem(`vote_${school.id}`)
-    if (savedVote === "upvote" || savedVote === "downvote") {
-      setUserVote(savedVote)
+    const savedFavorite = localStorage.getItem(`favorite_${school.id}`)
+    if (savedFavorite === "true") {
+      setFavorited(true)
+      onFavoriteToggle?.(school.id, true)
     }
-  }, [school.id])
+  }, [school.id, onFavoriteToggle])
 
-  // Update votes when school prop changes
+  // Update favorite status when prop changes
   useEffect(() => {
-    setVotes(school.votes || { upvotes: 0, downvotes: 0 })
-  }, [school.votes])
+    setFavorited(isFavorited)
+  }, [isFavorited])
 
   const handleVote = async (voteType: "upvote" | "downvote") => {
     setIsVoting(true)
@@ -73,6 +84,20 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
     }
   }
 
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newFavoriteState = !favorited
+    setFavorited(newFavoriteState)
+    
+    if (newFavoriteState) {
+      localStorage.setItem(`favorite_${school.id}`, "true")
+    } else {
+      localStorage.removeItem(`favorite_${school.id}`)
+    }
+    
+    onFavoriteToggle?.(school.id, newFavoriteState)
+  }
+
   return (
     <Card
       className={cn(
@@ -95,6 +120,20 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
                   <h3 className="font-semibold text-foreground text-base leading-snug group-hover:text-primary transition-colors">
                     {school.name}
                   </h3>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={cn(
+                      "h-7 px-2 hover:bg-yellow-500/10",
+                      favorited && "bg-yellow-500/20 text-yellow-600"
+                    )}
+                    onClick={handleFavoriteToggle}
+                  >
+                    <Star className={cn(
+                      "w-4 h-4",
+                      favorited && "fill-current"
+                    )} />
+                  </Button>
                   <div className="flex items-center gap-1">
                     <Button
                       size="sm"
