@@ -1,3 +1,5 @@
+/*Data models*/
+
 export type LocationType = "zip" | "state"
 export type SortOption = "distance" | "alphabetical"
 

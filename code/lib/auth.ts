@@ -1,10 +1,12 @@
 // Client-side auth utilities
 
+/*Retrieves stored login token*/
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null
   return localStorage.getItem("admin_token")
 }
 
+/*Gets logged University info*/
 export function getUniversityInfo(): { id: string; name: string } | null {
   if (typeof window === "undefined") return null
 
@@ -16,6 +18,7 @@ export function getUniversityInfo(): { id: string; name: string } | null {
   return { id, name }
 }
 
+/*Clears the auth token*/
 export function clearAuth(): void {
   if (typeof window === "undefined") return
 
@@ -24,6 +27,8 @@ export function clearAuth(): void {
   localStorage.removeItem("university_id")
 }
 
+
+/*Checks if user is still logged in*/
 export async function verifyAuth(): Promise<boolean> {
   const token = getAuthToken()
 
