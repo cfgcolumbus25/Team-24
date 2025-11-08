@@ -1,4 +1,4 @@
-# 🔔 CLEP Alert Workflow - Automated Email Notifications
+# CLEP Alert Workflow - Automated Email Notifications
 
 ## Overview
 
