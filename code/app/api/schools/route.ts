@@ -1,15 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { schoolsStore } from "@/lib/schools-store"
+import { getSchoolsStore } from "@/lib/schools-store"
 
-// In production, this would query a real database
-// For now, we use the same in-memory store as the admin panel
+// Get the schools from the JSON file
 export async function GET(request: NextRequest) {
   try {
+    // Get the search parameters from the request
     const searchParams = request.nextUrl.searchParams
     const state = searchParams.get("state")
     const zip = searchParams.get("zip")
 
-    let schools = [...schoolsStore]
+    // Get schools with votes from JSON file merged in
+    let schools = await getSchoolsStore()
 
     // Filter by state if provided
     if (state) {
