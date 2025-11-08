@@ -1,19 +1,11 @@
 "use client"
 
 import { useState } from "react"
-<<<<<<< HEAD:code/app/components/course-filter.tsx
 import { Button } from "@/app/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { Input } from "@/app/components/ui/input"
 import { Label } from "@/app/components/ui/label"
-import { BookOpen, Plus, X } from "lucide-react"
-=======
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { BookOpen, Plus, X, Edit2, Info } from "lucide-react"
->>>>>>> course-filter:code/components/course-filter.tsx
 import { CLEP_EXAMS } from "@/lib/constants"
 import type { SelectedCourse } from "@/lib/types"
 import { Badge } from "@/app/components/ui/badge"
@@ -29,6 +21,8 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
   const [score, setScore] = useState("")
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null)
   const [editScore, setEditScore] = useState("")
+
+  const [scoreError, setScoreError] = useState("")
 
   const handleAddCourse = () => {
     if (selectedExamId) {
@@ -56,8 +50,18 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
   }
 
   const handleSaveEdit = (examId: number) => {
-    const updatedCourses = selectedCourses.map(course => 
-      course.examId === examId 
+    // Validate score
+    if (editScore) {
+      const parsedScore = Number.parseInt(editScore, 10)
+      if (parsedScore < 20 || parsedScore > 80) {
+        setScoreError("Score must be between 20 and 80")
+        return
+      }
+    }
+
+    setScoreError("") // Clear any errors
+    const updatedCourses = selectedCourses.map(course =>
+      course.examId === examId
         ? { ...course, score: editScore ? Number.parseInt(editScore, 10) : undefined }
         : course
     )
@@ -69,6 +73,7 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
   const handleCancelEdit = () => {
     setEditingCourseId(null)
     setEditScore("")
+    setScoreError("") // Clear error on cancel
   }
 
   const handleRemoveCourse = (examId: number) => {
@@ -131,24 +136,32 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
                       </Badge>
                     )}
                   </div>
-                  
+
                   {isEditing ? (
-                    <div className="flex items-center gap-2 mt-2">
-                      <Input
-                        type="number"
-                        placeholder="Enter score"
-                        value={editScore}
-                        onChange={(e) => setEditScore(e.target.value)}
-                        min={20}
-                        max={80}
-                        className="h-8 w-24"
-                      />
-                      <Button size="sm" onClick={() => handleSaveEdit(course.examId)} className="h-8">
-                        Save
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="h-8">
-                        Cancel
-                      </Button>
+                    <div className="flex flex-col gap-2 mt-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Enter score"
+                          value={editScore}
+                          onChange={(e) => {
+                            setEditScore(e.target.value)
+                            setScoreError("") // Clear error on type
+                          }}
+                          min={20}
+                          max={80}
+                          className={`h-8 w-24 ${scoreError ? 'border-red-500' : ''}`}
+                        />
+                        <Button size="sm" onClick={() => handleSaveEdit(course.examId)} className="h-8">
+                          Save
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="h-8">
+                          Cancel
+                        </Button>
+                      </div>
+                      {scoreError && (
+                        <p className="text-xs text-red-500">{scoreError}</p>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -165,7 +178,7 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
                   )}
                 </div>
               </div>
-              
+
               {!isEditing && (
                 <div className="flex items-center gap-1">
                   <Button
