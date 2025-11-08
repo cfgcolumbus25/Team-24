@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useEffect, useRef } from "react"
+import { useMemo } from "react"
 import { MapPin } from "lucide-react"
 import type { School } from "@/lib/types"
 
@@ -15,180 +13,155 @@ interface MapContainerProps {
 }
 
 export function MapContainer({ schools, center, radius, selectedSchoolId, onSchoolSelect }: MapContainerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+  // Build the embed URL using Google Maps Embed API
+  // The Embed API supports: view, directions, place, search, streetview
+  // For multiple markers, we'll use a combination of view mode with search queries
+  const mapUrl = useMemo(() => {
+    if (!apiKey) return ""
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    // Calculate center point for the map
+    let mapCenter: { lat: number; lng: number }
+    let zoom: number
 
-    // Set canvas size
-    canvas.width = canvas.offsetWidth
-    canvas.height = canvas.offsetHeight
-
-    // Clear canvas
-    ctx.fillStyle = "#0a0d14"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    // Draw grid pattern
-    ctx.strokeStyle = "#1e293b"
-    ctx.lineWidth = 1
-    const gridSize = 40
-    for (let x = 0; x <= canvas.width; x += gridSize) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvas.height)
-      ctx.stroke()
-    }
-    for (let y = 0; y <= canvas.height; y += gridSize) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(canvas.width, y)
-      ctx.stroke()
-    }
-
-    if (schools.length === 0 || !center) {
-      // Draw placeholder text
-      ctx.fillStyle = "#64748b"
-      ctx.font = "16px system-ui"
-      ctx.textAlign = "center"
-      ctx.fillText("Enter a location to view schools on map", canvas.width / 2, canvas.height / 2)
-      return
-    }
-
-    // Calculate bounds
-    let minLat = schools[0].latitude
-    let maxLat = schools[0].latitude
-    let minLng = schools[0].longitude
-    let maxLng = schools[0].longitude
-
-    schools.forEach((school) => {
-      minLat = Math.min(minLat, school.latitude)
-      maxLat = Math.max(maxLat, school.latitude)
-      minLng = Math.min(minLng, school.longitude)
-      maxLng = Math.max(maxLng, school.longitude)
-    })
-
-    const padding = 50
-    const mapWidth = canvas.width - padding * 2
-    const mapHeight = canvas.height - padding * 2
-
-    // Draw radius circle if specified
-    if (radius && center) {
-      const centerX = padding + ((center.lng - minLng) / (maxLng - minLng)) * mapWidth
-      const centerY = padding + ((maxLat - center.lat) / (maxLat - minLat)) * mapHeight
-
-      // Approximate radius in pixels (rough conversion)
-      const radiusPixels = (radius / 50) * Math.min(mapWidth, mapHeight) * 0.4
-
-      ctx.fillStyle = "rgba(59, 130, 246, 0.1)"
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.3)"
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, radiusPixels, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.stroke()
-    }
-
-    // Draw school markers
-    schools.forEach((school) => {
-      const x = padding + ((school.longitude - minLng) / (maxLng - minLng)) * mapWidth
-      const y = padding + ((maxLat - school.latitude) / (maxLat - minLat)) * mapHeight
-
-      const isSelected = selectedSchoolId === school.id
-      const markerSize = isSelected ? 12 : 8
-
-      // Draw marker
-      ctx.fillStyle = isSelected ? "#3b82f6" : "#6366f1"
-      ctx.strokeStyle = "#ffffff"
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.arc(x, y, markerSize, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.stroke()
-
-      // Draw label for selected school
-      if (isSelected) {
-        ctx.fillStyle = "#1e293b"
-        ctx.strokeStyle = "#ffffff"
-        ctx.lineWidth = 3
-        ctx.font = "12px system-ui"
-        ctx.textAlign = "center"
-
-        const labelY = y - markerSize - 8
-        const labelText = school.name
-        const metrics = ctx.measureText(labelText)
-        const labelPadding = 6
-
-        // Draw label background
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(x - metrics.width / 2 - labelPadding, labelY - 12, metrics.width + labelPadding * 2, 20)
-
-        // Draw label border
-        ctx.strokeStyle = "#e2e8f0"
-        ctx.lineWidth = 1
-        ctx.strokeRect(x - metrics.width / 2 - labelPadding, labelY - 12, metrics.width + labelPadding * 2, 20)
-
-        // Draw label text
-        ctx.fillStyle = "#1e293b"
-        ctx.fillText(labelText, x, labelY)
+    if (schools.length > 0) {
+      // If a school is selected, center on that school
+      if (selectedSchoolId) {
+        const selectedSchool = schools.find((s) => s.id === selectedSchoolId)
+        if (selectedSchool) {
+          mapCenter = { lat: selectedSchool.latitude, lng: selectedSchool.longitude }
+          zoom = 14
+          
+          // Use place mode for selected school to show marker
+          const searchQuery = encodeURIComponent(`${selectedSchool.name}, ${selectedSchool.city}, ${selectedSchool.state}`)
+          return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${searchQuery}&zoom=${zoom}`
+        }
       }
-    })
-  }, [schools, center, radius, selectedSchoolId])
 
-  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (schools.length === 0 || !center) return
+      // Calculate average center from all schools
+      const avgLat = schools.reduce((sum, s) => sum + s.latitude, 0) / schools.length
+      const avgLng = schools.reduce((sum, s) => sum + s.longitude, 0) / schools.length
+      mapCenter = { lat: avgLat, lng: avgLng }
 
-    const canvas = canvasRef.current
-    if (!canvas) return
+      // Calculate zoom based on spread of schools
+      if (schools.length === 1) {
+        zoom = radius ? 12 : 10
+        const school = schools[0]
+        const searchQuery = encodeURIComponent(`${school.name}, ${school.city}, ${school.state}`)
+        return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${searchQuery}&zoom=${zoom}`
+      } else {
+        // Calculate bounding box to determine zoom
+        const lats = schools.map((s) => s.latitude)
+        const lngs = schools.map((s) => s.longitude)
+        const latDiff = Math.max(...lats) - Math.min(...lats)
+        const lngDiff = Math.max(...lngs) - Math.min(...lngs)
+        const maxDiff = Math.max(latDiff, lngDiff)
+        
+        if (maxDiff > 5) zoom = 6
+        else if (maxDiff > 2) zoom = 7
+        else if (maxDiff > 1) zoom = 8
+        else if (maxDiff > 0.5) zoom = 9
+        else if (maxDiff > 0.2) zoom = 10
+        else zoom = 11
 
-    const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
-
-    // Calculate bounds
-    let minLat = schools[0].latitude
-    let maxLat = schools[0].latitude
-    let minLng = schools[0].longitude
-    let maxLng = schools[0].longitude
-
-    schools.forEach((school) => {
-      minLat = Math.min(minLat, school.latitude)
-      maxLat = Math.max(maxLat, school.latitude)
-      minLng = Math.min(minLng, school.longitude)
-      maxLng = Math.max(maxLng, school.longitude)
-    })
-
-    const padding = 50
-    const mapWidth = canvas.width - padding * 2
-    const mapHeight = canvas.height - padding * 2
-
-    // Check if click is near any school marker
-    for (const school of schools) {
-      const markerX = padding + ((school.longitude - minLng) / (maxLng - minLng)) * mapWidth
-      const markerY = padding + ((maxLat - school.latitude) / (maxLat - minLat)) * mapHeight
-
-      const distance = Math.sqrt((x - markerX) ** 2 + (y - markerY) ** 2)
-      const hitRadius = selectedSchoolId === school.id ? 12 : 8
-
-      if (distance <= hitRadius + 5) {
-        onSchoolSelect(school.id)
-        break
+        // For multiple schools, use view mode centered on average
+        // Note: Embed API doesn't easily show multiple custom markers
+        // We'll center on the area and users can see the general location
+        // Alternative: Use a search query with coordinates for one school as reference
+        const baseUrl = "https://www.google.com/maps/embed/v1/view"
+        const params = new URLSearchParams({
+          key: apiKey,
+          center: `${mapCenter.lat},${mapCenter.lng}`,
+          zoom: zoom.toString(),
+        })
+        return `${baseUrl}?${params.toString()}`
       }
+    } else if (center) {
+      // No schools but we have a center point
+      const baseUrl = "https://www.google.com/maps/embed/v1/view"
+      const params = new URLSearchParams({
+        key: apiKey,
+        center: `${center.lat},${center.lng}`,
+        zoom: radius ? "10" : "6",
+      })
+      return `${baseUrl}?${params.toString()}`
+    } else {
+      // Default view - show United States
+      const baseUrl = "https://www.google.com/maps/embed/v1/view"
+      const params = new URLSearchParams({
+        key: apiKey,
+        center: "39.8283,-98.5795", // Center of USA
+        zoom: "4",
+      })
+      return `${baseUrl}?${params.toString()}`
     }
+  }, [schools, center, radius, selectedSchoolId, apiKey])
+
+  if (!apiKey) {
+    return (
+      <div className="w-full h-full bg-muted relative flex items-center justify-center">
+        <div className="text-center p-6">
+          <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+          <p className="text-sm text-muted-foreground mb-2">Google Maps API key is required</p>
+          <p className="text-xs text-muted-foreground">
+            Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your .env.local file
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="w-full h-full bg-muted relative">
-      <canvas ref={canvasRef} onClick={handleCanvasClick} className="w-full h-full cursor-pointer" />
-      <div className="absolute top-4 left-4 bg-card border border-border rounded-lg px-3 py-2 shadow-lg">
+      <iframe
+        key={mapUrl} // Force re-render when URL changes
+        width="100%"
+        height="100%"
+        style={{ border: 0 }}
+        loading="lazy"
+        allowFullScreen
+        referrerPolicy="no-referrer-when-downgrade"
+        src={mapUrl}
+        className="w-full h-full"
+        title="Schools Map"
+      />
+      
+      <div className="absolute top-4 left-4 bg-card border border-border rounded-lg px-3 py-2 shadow-lg z-10">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <MapPin className="w-3 h-3" />
-          <span>Interactive Map View</span>
+          <span>{schools.length} {schools.length === 1 ? "School" : "Schools"}</span>
         </div>
       </div>
+
+      {/* Show school quick-select buttons when multiple schools are available */}
+      {schools.length > 1 && schools.length <= 15 && (
+        <div className="absolute bottom-4 left-4 right-4 bg-card border border-border rounded-lg p-3 shadow-lg z-10 max-h-40 overflow-y-auto">
+          <div className="text-xs font-medium text-muted-foreground mb-2">View Schools:</div>
+          <div className="flex flex-wrap gap-2">
+            {schools.map((school) => {
+              const isSelected = selectedSchoolId === school.id
+              return (
+                <button
+                  key={school.id}
+                  onClick={() => {
+                    // Update map to show this school
+                    onSchoolSelect(school.id)
+                    // The mapUrl will update via useMemo when selectedSchoolId changes
+                  }}
+                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-muted border-border hover:border-primary/50"
+                  }`}
+                >
+                  {school.name}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
