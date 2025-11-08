@@ -26,5 +26,5 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+code/next-env.d.ts
 
