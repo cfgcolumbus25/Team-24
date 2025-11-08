@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp, ExternalLink, MapPin, ThumbsUp, ThumbsDown } fr
 import { SchoolDetails } from "./school-details"
 import type { School, SelectedCourse } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface SchoolCardProps {
   school: School
@@ -95,7 +96,21 @@ export function SchoolCard({ school, selectedCourses, isSelected, onSelect }: Sc
                   <h3 className="font-semibold text-foreground text-base leading-snug group-hover:text-primary transition-colors">
                     {school.name}
                   </h3>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                        <Info 
+                          className="w-3.5 h-3.5 text-muted-foreground cursor-help hover:text-primary transition"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                          <p className="text-xs max-w-[180px]">
+                            Reliability of cutoff scores. 
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
                       size="sm"
                       variant="ghost"
