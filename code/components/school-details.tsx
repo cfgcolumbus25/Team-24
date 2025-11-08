@@ -60,15 +60,19 @@ export function SchoolDetails({ school, selectedCourses }: SchoolDetailsProps) {
 
                     {policy.isGeneralCredit && (
                       <TooltipProvider>
-                        <Tooltip>
+                        <Tooltip delayDuration={200}>
                           <TooltipTrigger asChild>
-                            <Badge variant="outline" className="text-xs cursor-help">
-                              <Info className="w-3 h-3 mr-1" />
-                              General
+                            <Badge variant="outline" className="text-xs cursor-help hover:bg-primary/10 transition-colors">
+                              <Info className="w-3 h-3 mr-1 text-primary" />
+                              General Credit
                             </Badge>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-xs">Counts as general elective credit</p>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-xs font-semibold mb-1">General Elective Credit</p>
+                            <p className="text-xs text-muted-foreground">
+                              This credit counts as a general elective and may not fulfill specific degree requirements. 
+                              Verify with your academic advisor how this applies to your program.
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -184,15 +188,19 @@ export function SchoolDetails({ school, selectedCourses }: SchoolDetailsProps) {
 
                       {policy.isGeneralCredit && (
                         <TooltipProvider>
-                          <Tooltip>
+                          <Tooltip delayDuration={200}>
                             <TooltipTrigger asChild>
-                              <Badge variant="outline" className="text-xs cursor-help">
-                                <Info className="w-3 h-3 mr-1" />
-                                General
+                              <Badge variant="outline" className="text-xs cursor-help hover:bg-primary/10 transition-colors">
+                                <Info className="w-3 h-3 mr-1 text-primary" />
+                                General Credit
                               </Badge>
                             </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">Counts as general elective credit</p>
+                            <TooltipContent className="max-w-xs">
+                              <p className="text-xs font-semibold mb-1">General Elective Credit</p>
+                              <p className="text-xs text-muted-foreground">
+                                This credit counts as a general elective and may not fulfill specific degree requirements. 
+                                Verify with your academic advisor how this applies to your program.
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
