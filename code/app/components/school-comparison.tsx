@@ -1,13 +1,12 @@
 "use client"
 
 import { Button } from "@/app/components/ui/button"
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/app/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/app/components/ui/dialog"
 import { Badge } from "@/app/components/ui/badge"
 import { X, MapPin, ExternalLink, ThumbsUp, ThumbsDown, Trash2 } from "lucide-react"
 import type { School } from "@/lib/types"
 import { CLEP_EXAMS } from "@/lib/constants"
-import { cn } from "@/lib/utils"
 
 interface SchoolComparisonProps {
   schools: School[]
@@ -54,204 +53,176 @@ export function SchoolComparison({
         <DialogHeader>
           <DialogTitle>Compare Schools</DialogTitle>
           <DialogDescription>
-            Side-by-side comparison of {schools.length} {schools.length === 1 ? "school" : "schools"}
+            {schools.length === 1
+              ? "Review the details for your selected school."
+              : `Side-by-side comparison of ${schools.length} schools.`}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Action buttons */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClearAll}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Clear All
-            </Button>
-            <div className="text-sm text-muted-foreground">
-              {schools.length} {schools.length === 1 ? "school" : "schools"} selected
+        <div className="space-y-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-base font-medium">Selected Schools</p>
+              <p className="text-sm text-muted-foreground">
+                Review school details, community feedback, and CLEP credit policies without losing the big picture.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClearAll}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear All
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {schools.length} {schools.length === 1 ? "school selected" : "schools selected"}
+              </span>
             </div>
           </div>
 
-          {/* Comparison Table */}
-          <div className="border rounded-lg overflow-x-auto w-full">
-            <Table className="w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px] sticky left-0 bg-background z-10">
-                    <div className="font-semibold">Comparison</div>
-                  </TableHead>
-                  {schools.map((school) => (
-                    <TableHead key={school.id} className="w-[180px] min-w-[150px]">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm mb-1">{school.name}</div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            <span>
-                              {school.city}, {school.state}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0"
-                          onClick={() => onRemoveSchool(school.id)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {/* Basic Info Row */}
-                <TableRow>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">
-                    Location
-                  </TableCell>
-                  {schools.map((school) => (
-                    <TableCell key={school.id}>
-                      <div className="text-sm">
-                        <div>{school.address}</div>
-                        <div className="text-muted-foreground">
-                          {school.city}, {school.state} {school.zip}
-                        </div>
-                        {school.distance !== undefined && (
-                          <Badge variant="secondary" className="mt-1 text-xs">
-                            {school.distance.toFixed(1)} mi
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
+          <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+            {schools.map((school) => (
+              <Card
+                key={school.id}
+                className="group relative h-full overflow-hidden shadow-sm transition-shadow hover:shadow-md"
+              >
+                <CardHeader className="flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1.5">
+                      <CardTitle className="text-lg leading-tight">{school.name}</CardTitle>
+                      <CardDescription className="flex items-center gap-1 text-xs">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span>
+                          {school.city}, {school.state}
+                        </span>
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => onRemoveSchool(school.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-                {/* Website Row */}
-                <TableRow>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">
-                    Website
-                  </TableCell>
-                  {schools.map((school) => (
-                    <TableCell key={school.id}>
-                      {school.websiteUrl ? (
-                        <a
-                          href={school.websiteUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-1 text-sm"
-                        >
-                          Visit Website
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">N/A</span>
+                  <div className="grid gap-2 text-sm text-muted-foreground">
+                    <div>
+                      <p>{school.address}</p>
+                      <p>
+                        {school.city}, {school.state} {school.zip}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {school.distance !== undefined && (
+                        <Badge variant="secondary" className="text-xs">
+                          {school.distance.toFixed(1)} mi away
+                        </Badge>
                       )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                      <Badge variant="outline" className="text-xs">
+                        {school.policies.length} {school.policies.length === 1 ? "policy" : "policies"}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
 
-                {/* Votes Row */}
-                <TableRow>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">
-                    Community Rating
-                  </TableCell>
-                  {schools.map((school) => (
-                    <TableCell key={school.id}>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 text-success">
-                          <ThumbsUp className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            {school.votes?.upvotes || 0}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 text-destructive">
-                          <ThumbsDown className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            {school.votes?.downvotes || 0}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-
-                {/* Policies Section */}
-                {sortedExamIds.length > 0 && (
-                  <>
-                    <TableRow>
-                      <TableCell
-                        colSpan={schools.length + 1}
-                        className="bg-muted/50 font-semibold"
+                <CardContent className="space-y-6">
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    {school.websiteUrl ? (
+                      <a
+                        href={school.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                       >
-                        CLEP Exam Policies
-                      </TableCell>
-                    </TableRow>
-                    {sortedExamIds.map((examId) => (
-                      <TableRow key={examId}>
-                        <TableCell className="font-medium sticky left-0 bg-background z-10">
-                          {getExamName(examId)}
-                        </TableCell>
-                        {schools.map((school) => {
+                        Visit Website
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">Website unavailable</span>
+                    )}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1 text-success">
+                        <ThumbsUp className="h-4 w-4" />
+                        <span className="font-medium">{school.votes?.upvotes || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-destructive">
+                        <ThumbsDown className="h-4 w-4" />
+                        <span className="font-medium">{school.votes?.downvotes || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {sortedExamIds.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">CLEP Policies</p>
+                        <p className="text-xs text-muted-foreground">
+                          Quickly scan minimum scores, course equivalents, credits, and school-specific notes.
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        {sortedExamIds.map((examId) => {
                           const policy = getPolicy(school, examId)
+                          const examName = getExamName(examId)
+
                           return (
-                            <TableCell key={school.id}>
-                              {policy ? (
-                                <div className="space-y-1 text-sm">
-                                  <div>
+                            <div
+                              key={`${school.id}-${examId}`}
+                              className="rounded-lg border border-border/60 bg-card/80 p-4 shadow-xs"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-foreground">{examName}</p>
+                                  {policy ? (
+                                    <p className="text-xs text-muted-foreground">
+                                      {policy.courseCode} – {policy.courseName}
+                                    </p>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground">Not accepted</p>
+                                  )}
+                                </div>
+                                <div>
+                                  {policy ? (
                                     <Badge variant="outline" className="text-xs">
                                       Min Score: {policy.minScore}
                                     </Badge>
-                                  </div>
-                                  <div className="text-muted-foreground">
-                                    {policy.courseCode} - {policy.courseName}
-                                  </div>
-                                  <div className="text-xs">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {policy.credits} {policy.credits === 1 ? "credit" : "credits"}
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs opacity-60">
+                                      —
                                     </Badge>
-                                    {policy.isGeneralCredit && (
-                                      <Badge variant="outline" className="ml-1 text-xs">
-                                        General
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  {policy.notes && (
-                                    <div className="text-xs text-muted-foreground italic">
-                                      {policy.notes}
-                                    </div>
                                   )}
                                 </div>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">Not accepted</span>
+                              </div>
+
+                              {policy && (
+                                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {policy.credits} {policy.credits === 1 ? "credit" : "credits"}
+                                  </Badge>
+                                  {policy.isGeneralCredit && (
+                                    <Badge variant="outline" className="text-[10px] uppercase">
+                                      General
+                                    </Badge>
+                                  )}
+                                  {policy.notes && (
+                                    <span className="text-muted-foreground italic">{policy.notes}</span>
+                                  )}
+                                </div>
                               )}
-                            </TableCell>
+                            </div>
                           )
                         })}
-                      </TableRow>
-                    ))}
-                  </>
-                )}
-
-                {/* Total Policies Count */}
-                <TableRow>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">
-                    Total Policies
-                  </TableCell>
-                  {schools.map((school) => (
-                    <TableCell key={school.id}>
-                      <Badge variant="outline" className="text-sm">
-                        {school.policies.length} {school.policies.length === 1 ? "policy" : "policies"}
-                      </Badge>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableBody>
-            </Table>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </DialogContent>
