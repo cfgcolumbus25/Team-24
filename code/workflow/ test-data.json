@@ -1,0 +1,240 @@
+{
+  "description": "Test data and commands for CLEP Alert n8n workflow",
+  "version": "1.0",
+  "webhookUrl": {
+    "production": "http://localhost:5678/webhook/clep-alert",
+    "note": "Update this URL if deploying to a remote server"
+  },
+  "testScenarios": [
+    {
+      "name": "Biology Score - Northern Virginia",
+      "description": "Student in Fairfax, VA area receives Biology CLEP score",
+      "payload": {
+        "studentEmail": "test@example.com",
+        "studentName": "Alex Johnson",
+        "exam": "Biology",
+        "score": 65,
+        "zip": "22030"
+      },
+      "curlCommand": "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"test@example.com\",\"studentName\":\"Alex Johnson\",\"exam\":\"Biology\",\"score\":65,\"zip\":\"22030\"}'",
+      "expectedResult": "Email sent to test@example.com with 5 nearby colleges (GMU, NOVA, UMD, VT, JMU)"
+    },
+    {
+      "name": "Calculus Score - Maryland",
+      "description": "Student in Rockville, MD receives Calculus CLEP score",
+      "payload": {
+        "studentEmail": "maria.garcia@example.com",
+        "studentName": "Maria Garcia",
+        "exam": "Calculus",
+        "score": 58,
+        "zip": "20850"
+      },
+      "curlCommand": "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"maria.garcia@example.com\",\"studentName\":\"Maria Garcia\",\"exam\":\"Calculus\",\"score\":58,\"zip\":\"20850\"}'",
+      "expectedResult": "Email sent to maria.garcia@example.com with nearby colleges in Maryland area"
+    },
+    {
+      "name": "US History I - Washington DC",
+      "description": "Student in DC receives US History I CLEP score",
+      "payload": {
+        "studentEmail": "james.smith@example.com",
+        "studentName": "James Smith",
+        "exam": "US History I",
+        "score": 52,
+        "zip": "20001"
+      },
+      "curlCommand": "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"james.smith@example.com\",\"studentName\":\"James Smith\",\"exam\":\"US History I\",\"score\":52,\"zip\":\"20001\"}'",
+      "expectedResult": "Email sent to james.smith@example.com with DC-area colleges"
+    },
+    {
+      "name": "English Composition - Richmond",
+      "description": "Student in Richmond, VA receives English Composition score",
+      "payload": {
+        "studentEmail": "sarah.williams@example.com",
+        "studentName": "Sarah Williams",
+        "exam": "English Composition",
+        "score": 60,
+        "zip": "23219"
+      },
+      "curlCommand": "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"sarah.williams@example.com\",\"studentName\":\"Sarah Williams\",\"exam\":\"English Composition\",\"score\":60,\"zip\":\"23219\"}'",
+      "expectedResult": "Email sent to sarah.williams@example.com with Richmond-area colleges"
+    },
+    {
+      "name": "Chemistry - Baltimore",
+      "description": "High-scoring student in Baltimore area",
+      "payload": {
+        "studentEmail": "michael.chen@example.com",
+        "studentName": "Michael Chen",
+        "exam": "Chemistry",
+        "score": 72,
+        "zip": "21201"
+      },
+      "curlCommand": "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"michael.chen@example.com\",\"studentName\":\"Michael Chen\",\"exam\":\"Chemistry\",\"score\":72,\"zip\":\"21201\"}'",
+      "expectedResult": "Email sent to michael.chen@example.com highlighting strong score"
+    }
+  ],
+  "quickTestCommands": {
+    "basicTest": {
+      "description": "Quick test with your own email",
+      "command": "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"YOUR_EMAIL@gmail.com\",\"studentName\":\"Test User\",\"exam\":\"Biology\",\"score\":65,\"zip\":\"22030\"}'"
+    },
+    "multipleTests": {
+      "description": "Run multiple tests in sequence",
+      "commands": [
+        "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"test1@example.com\",\"studentName\":\"Student One\",\"exam\":\"Biology\",\"score\":65,\"zip\":\"22030\"}'",
+        "sleep 2",
+        "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"test2@example.com\",\"studentName\":\"Student Two\",\"exam\":\"Calculus\",\"score\":58,\"zip\":\"20850\"}'",
+        "sleep 2",
+        "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"test3@example.com\",\"studentName\":\"Student Three\",\"exam\":\"History\",\"score\":52,\"zip\":\"20001\"}'"
+      ]
+    }
+  },
+  "payloadSchema": {
+    "type": "object",
+    "required": ["studentEmail", "studentName", "exam", "score", "zip"],
+    "properties": {
+      "studentEmail": {
+        "type": "string",
+        "format": "email",
+        "description": "Student's email address where notification will be sent",
+        "example": "student@example.com"
+      },
+      "studentName": {
+        "type": "string",
+        "description": "Student's full name for personalization",
+        "example": "Alex Johnson"
+      },
+      "exam": {
+        "type": "string",
+        "description": "Name of the CLEP exam taken",
+        "examples": [
+          "Biology",
+          "Calculus",
+          "Chemistry",
+          "English Composition",
+          "US History I",
+          "US History II",
+          "American Government",
+          "Psychology",
+          "Sociology",
+          "Spanish",
+          "French",
+          "German"
+        ]
+      },
+      "score": {
+        "type": "integer",
+        "minimum": 20,
+        "maximum": 80,
+        "description": "CLEP exam score (typically 20-80 scale)",
+        "example": 65
+      },
+      "zip": {
+        "type": "string",
+        "pattern": "^[0-9]{5}$",
+        "description": "5-digit ZIP code for finding nearby colleges",
+        "example": "22030"
+      }
+    }
+  },
+  "expectedResponse": {
+    "success": {
+      "statusCode": 200,
+      "message": "Workflow executed successfully",
+      "note": "Email should arrive within 5-10 seconds"
+    },
+    "error": {
+      "statusCode": 404,
+      "message": "Webhook not registered",
+      "solution": "Ensure workflow is Active (toggle ON in n8n)"
+    }
+  },
+  "validationRules": {
+    "studentEmail": "Must be valid email format",
+    "studentName": "Should not be empty",
+    "exam": "Should be a recognized CLEP exam name",
+    "score": "Typically between 20-80 for CLEP exams",
+    "zip": "Must be 5-digit US ZIP code"
+  },
+  "demoScenarios": {
+    "liveDemo": {
+      "description": "Use this for live hackathon demo",
+      "steps": [
+        "1. Have n8n workflow Active and visible on screen",
+        "2. Have Gmail open in another browser tab",
+        "3. Run this command:",
+        "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"your-email@gmail.com\",\"studentName\":\"Demo Student\",\"exam\":\"Biology\",\"score\":65,\"zip\":\"22030\"}'",
+        "4. Show n8n nodes lighting up green",
+        "5. Switch to Gmail tab and refresh to show email arrival",
+        "6. Open email to show personalized college recommendations"
+      ],
+      "timing": "Entire demo takes 15-20 seconds"
+    },
+    "judgeTesting": {
+      "description": "Instructions for judges to test themselves",
+      "steps": [
+        "1. Ensure n8n is running (n8n start)",
+        "2. Ensure workflow is Active",
+        "3. Replace YOUR_EMAIL in command below:",
+        "curl -X POST http://localhost:5678/webhook/clep-alert -H 'Content-Type: application/json' -d '{\"studentEmail\":\"YOUR_EMAIL\",\"studentName\":\"Judge Test\",\"exam\":\"Biology\",\"score\":65,\"zip\":\"22030\"}'",
+        "4. Check your email inbox for the notification"
+      ]
+    }
+  },
+  "troubleshooting": {
+    "noEmailReceived": {
+      "checks": [
+        "Is n8n running? (should see terminal with n8n logs)",
+        "Is workflow Active? (green toggle in n8n UI)",
+        "Is Gmail OAuth connected? (check Gmail node credentials)",
+        "Check spam/junk folder",
+        "Verify email address in payload is correct",
+        "Check n8n execution history for errors"
+      ]
+    },
+    "webhookNotFound": {
+      "checks": [
+        "Is workflow Active? Must be ON, not just saved",
+        "Are you using production URL? (webhook/ not webhook-test/)",
+        "Is n8n still running?",
+        "Check webhook node for correct path: 'clep-alert'"
+      ]
+    },
+    "errorInCode": {
+      "checks": [
+        "Check Code node for syntax errors",
+        "Verify items[0].json.body structure matches webhook payload",
+        "Check browser console (F12) for JavaScript errors",
+        "Test Code node individually using 'Execute step' button"
+      ]
+    }
+  },
+  "integrationExamples": {
+    "nodeJsBackend": {
+      "description": "Example integration from Node.js/Express backend",
+      "code": "// When student receives CLEP score\napp.post('/api/student-score', async (req, res) => {\n  const { email, name, exam, score, zip } = req.body;\n  \n  // Save to database\n  await db.scores.create({ email, exam, score });\n  \n  // Trigger n8n workflow\n  await fetch('http://localhost:5678/webhook/clep-alert', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      studentEmail: email,\n      studentName: name,\n      exam: exam,\n      score: score,\n      zip: zip\n    })\n  });\n  \n  res.json({ success: true });\n});"
+    },
+    "pythonBackend": {
+      "description": "Example integration from Python/Flask backend",
+      "code": "import requests\nfrom flask import Flask, request, jsonify\n\napp = Flask(__name__)\n\n@app.route('/api/student-score', methods=['POST'])\ndef handle_score():\n    data = request.json\n    \n    # Save to database\n    save_score_to_db(data)\n    \n    # Trigger n8n workflow\n    response = requests.post(\n        'http://localhost:5678/webhook/clep-alert',\n        json={\n            'studentEmail': data['email'],\n            'studentName': data['name'],\n            'exam': data['exam'],\n            'score': data['score'],\n            'zip': data['zip']\n        }\n    )\n    \n    return jsonify({'success': True})"
+    },
+    "reactFrontend": {
+      "description": "Example trigger from React frontend (for testing)",
+      "code": "const handleScoreSubmit = async (scoreData) => {\n  try {\n    const response = await fetch('http://localhost:5678/webhook/clep-alert', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({\n        studentEmail: scoreData.email,\n        studentName: scoreData.name,\n        exam: scoreData.exam,\n        score: scoreData.score,\n        zip: scoreData.zip\n      })\n    });\n    \n    if (response.ok) {\n      alert('Notification email sent!');\n    }\n  } catch (error) {\n    console.error('Failed to trigger workflow:', error);\n  }\n};"
+    }
+  },
+  "performanceMetrics": {
+    "expectedLatency": "< 5 seconds end-to-end",
+    "emailDeliveryTime": "1-3 seconds via Gmail API",
+    "webhookResponseTime": "< 500ms",
+    "concurrentCapacity": "10+ simultaneous requests (local)",
+    "productionRecommendations": "Use SendGrid/AWS SES for 1000+ emails/day"
+  },
+  "notes": [
+    "All test scenarios use mock college data",
+    "In production, replace mock data with real database queries",
+    "Email styling is responsive and mobile-friendly",
+    "Workflow includes error handling for missing fields",
+    "Gmail OAuth must be configured before testing",
+    "Keep n8n running throughout testing session"
+  ]
+}
