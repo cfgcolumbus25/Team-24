@@ -6,7 +6,7 @@
 ## Features
 - Available CLEP Credits
   - Lists all CLEP credits that a particular college accepts.
-  - Each university shows course and course number (if applicable), minimum score, credits, and badges(General Credit, Updated).
+  - Every university has a list of courses and course numbers (if applicable), minimum scores, credits, and badges (General Credit, Updated Month/Year).
   - The "General Credit" badge is for general electives and if you hover over it, it gives a tooltip/recommendation.
 
 - The map provides a visual representation of colleges/universities in the selected region that accept CLEP credits.
