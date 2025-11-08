@@ -103,10 +103,17 @@ export function SchoolDetails({ school, selectedCourses }: SchoolDetailsProps) {
 
   const matchedPolicies = selectedCourses.map((course) => {
     const policy = school.policies.find((p) => p.examId === course.examId)
+
+    const scoreNum = Number(course.score)
+    const hasScore = Number.isFinite(scoreNum)
+
+    const isAccepted = !!policy && hasScore && scoreNum >= policy.minScore
+
     return {
       ...course,
+      score: hasScore ? scoreNum : null,
       policy: policy || null,
-      isAccepted: policy ? course.score >= policy.minScore : false,
+      isAccepted,
     }
   })
 
@@ -146,21 +153,11 @@ export function SchoolDetails({ school, selectedCourses }: SchoolDetailsProps) {
             className={`p-3.5 rounded-lg border transition-all duration-200 hover:shadow-md group animate-in slide-in-from-left ${
               isAccepted 
                 ? "bg-gradient-to-br from-success/5 to-success/10 border-success/30 hover:border-success/50" 
-                : "bg-gradient-to-br from-destructive/5 to-destructive/10 border-destructive/30 hover:border-destructive/50"
+                : "bg-muted/30 border-border hover:border-border"
             }`}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-start gap-3">
-              <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-                isAccepted ? "bg-success/20" : "bg-destructive/20"
-              }`}>
-                {isAccepted ? (
-                  <CheckCircle2 className="w-4 h-4 text-success" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-destructive" />
-                )}
-              </div>
-
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="font-semibold text-sm text-foreground">{item.examName}</div>
@@ -169,14 +166,14 @@ export function SchoolDetails({ school, selectedCourses }: SchoolDetailsProps) {
                     className={`shrink-0 font-semibold ${
                       isAccepted 
                         ? "bg-success hover:bg-success/90 text-white" 
-                        : "bg-destructive/20 text-destructive border-destructive/30"
+                        : "bg-muted/40 text-muted-foreground border-border"
                     }`}
                   >
-                    {item.score} / {policy.minScore}
+                    {item.score ?? "-"} / {policy.minScore}
                   </Badge>
                 </div>
 
-                {isAccepted && (
+                {isAccepted ? (
                   <>
                     <div className="text-xs text-muted-foreground mt-1 mb-2.5">
                       <span className="font-semibold text-foreground">{policy.courseCode}</span> • {policy.courseName}
@@ -214,14 +211,13 @@ export function SchoolDetails({ school, selectedCourses }: SchoolDetailsProps) {
                       )}
                     </div>
                   </>
-                )}
-
-                {!isAccepted && (
-                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    Need {policy.minScore - item.score} more points to qualify
-                  </div>
-                )}
+                  ) : (
+                    // No score entered
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Info className="w-3 h-3" />
+                      Requires at least {policy.minScore} to qualify
+                    </div>
+                  )}
               </div>
             </div>
           </div>
