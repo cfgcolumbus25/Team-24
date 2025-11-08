@@ -1,5 +1,5 @@
-import { AdminAuthGuard } from "@/components/admin-auth-guard"
-import { AdminDashboard } from "@/components/admin-dashboard"
+import { AdminAuthGuard } from "@/app/components/admin-auth-guard"
+import { AdminDashboard } from "@/app/components/admin-dashboard"
 
 export default function AdminPage() {
   return (

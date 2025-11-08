@@ -1,4 +1,4 @@
-import { CLEPPathFinder } from "@/components/clep-pathfinder"
+import { CLEPPathFinder } from "@/app/components/clep-pathfinder"
 
 export default function Home() {
   return <CLEPPathFinder />
