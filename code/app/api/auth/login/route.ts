@@ -34,19 +34,19 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Store session token in HTTP-only cookie
+        //store session token in http-only cookie
         const cookieStore = await cookies()
         cookieStore.set('session_token', data.sessionToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24, // 24 hours
+            maxAge: 60 * 60 * 24, //24 hours
             path: '/',
         })
 
         return NextResponse.json({
-            universityId: data.user.id,
-            universityName: data.user.username,
+            universityId: data.user.schoolId,
+            universityName: data.user.schoolName || data.user.username,
             user: data.user,
         })
     } catch (error) {

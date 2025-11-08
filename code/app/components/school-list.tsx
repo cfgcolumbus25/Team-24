@@ -1,4 +1,5 @@
 "use client"
+
 import { SchoolCard } from "./school-card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { ArrowUpDown, Building2, Loader2 } from "lucide-react"

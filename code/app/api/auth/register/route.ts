@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5001"
 
-// Regex to validate .edu email addresses
+//regex to validate .edu email addresses
 const EDU_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu$/
 
 export async function POST(request: NextRequest) {
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
         const { username, email, password } = body
 
-        // Validation
+        //validation
         if (!username || !email || !password) {
             return NextResponse.json(
                 { error: "Username, email, and password are required" },
@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Validate .edu email
+        //validate .edu email
         if (!EDU_EMAIL_REGEX.test(email)) {
             return NextResponse.json(
-                { error: "Please use a valid .edu email address" },
+                { error: "Please use a valid .edu email address from your university" },
                 { status: 400 }
             )
         }
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Call backend register endpoint
+        //call backend register endpoint
         const response = await fetch(`${BACKEND_URL}/api/register`, {
             method: 'POST',
             headers: {
@@ -63,20 +63,20 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Store session token in HTTP-only cookie
+        //store session token in http-only cookie
         const cookieStore = await cookies()
         cookieStore.set('session_token', data.sessionToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24, // 24 hours
+            maxAge: 60 * 60 * 24, //24 hours
             path: '/',
         })
 
         return NextResponse.json({
             message: "Registration successful",
-            universityId: data.user.id,
-            universityName: data.user.username,
+            universityId: data.user.schoolId,
+            universityName: data.user.schoolName || data.user.username,
             user: data.user,
         })
     } catch (error) {
