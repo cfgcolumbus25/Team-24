@@ -24,13 +24,7 @@ export function CLEPPathFinder() {
   const [favoritedSchools, setFavoritedSchools] = useState<Set<number>>(new Set())
   const [isComparisonOpen, setIsComparisonOpen] = useState(false)
 
-  useEffect(() => {
-    console.log("=== DEBUG INFO ===")
-    console.log("Selected Courses:", selectedCourses)
-    console.log("All Schools Count:", allSchools.length)
-    console.log("Filtered Schools Count:", filteredSchools.length)
-  }, [selectedCourses, allSchools, filteredSchools])
-
+  
   const fetchSchools = async (filterState?: string) => {
     setIsLoadingSchools(true)
     try {
