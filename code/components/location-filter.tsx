@@ -48,24 +48,26 @@ export function LocationFilter({ locationType, location, onLocationChange }: Loc
         <h2 className="text-lg font-semibold text-foreground">Location</h2>
       </div>
 
-      <RadioGroup value={locationType} onValueChange={handleTypeChange}>
-        <div className="flex items-center space-x-2">
+      <RadioGroup value={locationType} onValueChange={handleTypeChange} className="gap-3">
+        <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 transition-colors">
           <RadioGroupItem value="zip" id="zip" />
-          <Label htmlFor="zip" className="cursor-pointer">
-            ZIP Code (50 mile radius)
+          <Label htmlFor="zip" className="cursor-pointer font-medium text-sm flex-1">
+            ZIP Code
+            <span className="text-xs text-muted-foreground ml-1">(50 mile radius)</span>
           </Label>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 transition-colors">
           <RadioGroupItem value="state" id="state" />
-          <Label htmlFor="state" className="cursor-pointer">
+          <Label htmlFor="state" className="cursor-pointer font-medium text-sm flex-1">
             State
+            <span className="text-xs text-muted-foreground ml-1">(All schools)</span>
           </Label>
         </div>
       </RadioGroup>
 
       {locationType === "zip" ? (
-        <div>
-          <Label htmlFor="zipInput" className="text-sm text-muted-foreground">
+        <div className="space-y-2">
+          <Label htmlFor="zipInput" className="text-sm font-medium text-foreground">
             Enter ZIP Code
           </Label>
           <Input
@@ -74,17 +76,22 @@ export function LocationFilter({ locationType, location, onLocationChange }: Loc
             placeholder="e.g., 22003"
             value={zipInput}
             onChange={(e) => handleZipChange(e.target.value)}
-            className="mt-1.5"
+            className="font-mono"
           />
+          {zipInput.length > 0 && zipInput.length < 5 && (
+            <p className="text-xs text-muted-foreground">
+              Enter all 5 digits
+            </p>
+          )}
         </div>
       ) : (
-        <div>
-          <Label htmlFor="stateSelect" className="text-sm text-muted-foreground">
+        <div className="space-y-2">
+          <Label htmlFor="stateSelect" className="text-sm font-medium text-foreground">
             Select State
           </Label>
           <Select value={stateInput} onValueChange={handleStateChange}>
-            <SelectTrigger id="stateSelect" className="mt-1.5">
-              <SelectValue placeholder="Select a state" />
+            <SelectTrigger id="stateSelect">
+              <SelectValue placeholder="Choose your state..." />
             </SelectTrigger>
             <SelectContent>
               {US_STATES.map((state) => (
