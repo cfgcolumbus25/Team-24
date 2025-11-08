@@ -112,7 +112,14 @@ export function CLEPPathFinder() {
         favorites.add(school.id)
       }
     })
-    setFavoritedSchools(favorites)
+    setFavoritedSchools((prev) => {
+      // Check if the Sets are equal
+      if (prev.size === favorites.size && 
+          Array.from(prev).every(id => favorites.has(id))) {
+        return prev
+      }
+      return favorites
+    })
   }, [allSchools])
 
   const getApproxCoordsFromZip = (zip: string): { lat: number; lng: number } | null => {
@@ -183,8 +190,8 @@ export function CLEPPathFinder() {
               selectedSchoolId={selectedSchoolId}
               onSchoolSelect={setSelectedSchoolId}
               isLoading={isLoadingSchools}
-              // favoritedSchoolIds={favoritedSchools}
-              // onFavoriteToggle={handleFavoriteToggle}
+              favoritedSchoolIds={favoritedSchools}
+              onFavoriteToggle={handleFavoriteToggle}
             />
           </div>
         </div>

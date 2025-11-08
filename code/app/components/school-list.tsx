@@ -12,6 +12,8 @@ interface SchoolListProps {
   selectedSchoolId: number | null
   onSchoolSelect: (id: number | null) => void
   isLoading?: boolean
+  favoritedSchoolIds?: Set<number>
+  onFavoriteToggle?: (schoolId: number, isFavorited: boolean) => void
 }
 
 export function SchoolList({
@@ -22,6 +24,8 @@ export function SchoolList({
   selectedSchoolId,
   onSchoolSelect,
   isLoading = false,
+  favoritedSchoolIds,
+  onFavoriteToggle,
 }: SchoolListProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -65,6 +69,8 @@ export function SchoolList({
                 selectedCourses={selectedCourses}
                 isSelected={selectedSchoolId === school.id}
                 onSelect={() => onSchoolSelect(school.id)}
+                isFavorited={favoritedSchoolIds?.has(school.id) ?? false}
+                onFavoriteToggle={onFavoriteToggle}
               />
             ))}
           </div>

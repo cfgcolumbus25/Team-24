@@ -32,14 +32,15 @@ export function SchoolCard({
   const [isVoting, setIsVoting] = useState(false)
   const [favorited, setFavorited] = useState(isFavorited)
 
-  // Load favorite status from localStorage
+  // Load favorite status from localStorage (only on mount)
   useEffect(() => {
     const savedFavorite = localStorage.getItem(`favorite_${school.id}`)
     if (savedFavorite === "true") {
       setFavorited(true)
-      onFavoriteToggle?.(school.id, true)
+      // Don't call onFavoriteToggle here - parent already loads favorites
+      // This prevents infinite loops from function recreation
     }
-  }, [school.id, onFavoriteToggle])
+  }, [school.id])
 
   // Update favorite status when prop changes
   useEffect(() => {
