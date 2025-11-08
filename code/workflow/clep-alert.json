@@ -1,0 +1,90 @@
+{
+  "name": "CLEP Score Alert Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clep-alert",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "clep-alert"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Get input data from webhook body\nconst data = items[0].json.body;\n\n// Mock colleges data (replace with real API call in production)\nconst colleges = [\n  { name: \"George Mason University\", course: \"BIOL 103\", credits: 4, distance: 12 },\n  { name: \"Northern Virginia Community College\", course: \"BIO 101\", credits: 3, distance: 8 },\n  { name: \"University of Maryland\", course: \"BSCI 105\", credits: 4, distance: 15 },\n  { name: \"Virginia Tech\", course: \"BIOL 1105\", credits: 4, distance: 45 },\n  { name: \"James Madison University\", course: \"BIO 114\", credits: 4, distance: 78 }\n];\n\n// Calculate total credits\nconst totalCredits = colleges.reduce((sum, c) => sum + c.credits, 0);\n\n// Format colleges as HTML table rows\nconst collegesList = colleges.map(c => `\n  <tr>\n    <td style=\"padding: 12px; border-bottom: 1px solid #e5e7eb;\">${c.name}</td>\n    <td style=\"padding: 12px; border-bottom: 1px solid #e5e7eb;\">${c.course}</td>\n    <td style=\"padding: 12px; border-bottom: 1px solid #e5e7eb;\">${c.credits}</td>\n    <td style=\"padding: 12px; border-bottom: 1px solid #e5e7eb;\">${c.distance} mi</td>\n  </tr>\n`).join('');\n\n// Create complete HTML email\nconst emailHTML = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background: #2563eb; color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }\n    .content { background: #f9fafb; padding: 30px 20px; }\n    table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 8px; overflow: hidden; }\n    th { background: #2563eb; color: white; padding: 15px; text-align: left; font-weight: bold; }\n    td { padding: 12px; border-bottom: 1px solid #e5e7eb; }\n    .button { display: inline-block; background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }\n    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; margin-top: 20px; }\n    ol { line-height: 2; padding-left: 20px; }\n    h2, h3 { color: #2563eb; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1 style=\"margin: 0; font-size: 28px;\">🎉 Congratulations, ${data.studentName}!</h1>\n      <p style=\"font-size: 18px; margin: 10px 0 0 0;\">Your ${data.exam} CLEP Score: ${data.score}</p>\n    </div>\n    <div class=\"content\">\n      <h2>${colleges.length} Nearby Colleges Accept Your Score!</h2>\n      <p style=\"font-size: 16px;\">Great news! We found colleges near you (ZIP: ${data.zip}) that will grant you <strong>${totalCredits} total credits</strong> for your CLEP ${data.exam} score:</p>\n      <table>\n        <thead>\n          <tr>\n            <th>College</th>\n            <th>Course</th>\n            <th>Credits</th>\n            <th>Distance</th>\n          </tr>\n        </thead>\n        <tbody>\n          ${collegesList}\n        </tbody>\n      </table>\n      <h3>📋 Next Steps:</h3>\n      <ol>\n        <li>Contact the admissions office at your preferred school</li>\n        <li>Request your official CLEP transcript from College Board</li>\n        <li>Ask about their credit transfer process</li>\n        <li>Verify credit requirements for your intended major</li>\n      </ol>\n      <div style=\"text-align: center; margin-top: 30px;\">\n        <a href=\"https://clep.collegeboard.org/\" class=\"button\">View Your Official Transcript →</a>\n      </div>\n    </div>\n    <div class=\"footer\">\n      <p><strong>CLEP Pathfinder</strong> - Automated College Credit Notifications</p>\n      <p>Powered by Modern States Education | Helping students save thousands on college costs</p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\n// Return email-ready data for Gmail node\nreturn [{\n  json: {\n    to: data.studentEmail,\n    subject: `🎉 Your ${data.exam} CLEP Score Opened Doors at ${colleges.length} Colleges!`,\n    html: emailHTML\n  }\n}];"
+      },
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Process & Format Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [650, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process & Format Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process & Format Email": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-11-08T08:00:00.000Z",
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "hackathon-demo-2025"
+  }
+}
