@@ -1,0 +1,240 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card } from "@/app/components/ui/card"
+import { Button } from "@/app/components/ui/button"
+import { Badge } from "@/app/components/ui/badge"
+import { ChevronDown, ChevronUp, ExternalLink, MapPin, ThumbsUp, ThumbsDown, Star } from "lucide-react"
+import { SchoolDetails } from "./school-details"
+import type { School, SelectedCourse } from "@/lib/types"
+import { cn } from "@/lib/utils"
+
+interface SchoolCardProps {
+  school: School
+  selectedCourses: SelectedCourse[]
+  isSelected: boolean
+  onSelect: () => void
+  isFavorited?: boolean
+  onFavoriteToggle?: (schoolId: number, isFavorited: boolean) => void
+}
+
+export function SchoolCard({ 
+  school, 
+  selectedCourses, 
+  isSelected, 
+  onSelect,
+  isFavorited = false,
+  onFavoriteToggle
+}: SchoolCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [votes, setVotes] = useState(school.votes || { upvotes: 0, downvotes: 0 })
+  const [userVote, setUserVote] = useState<"upvote" | "downvote" | null>(null)
+  const [isVoting, setIsVoting] = useState(false)
+  const [favorited, setFavorited] = useState(isFavorited)
+
+  // Load favorite status from localStorage (only on mount)
+  useEffect(() => {
+    const savedFavorite = localStorage.getItem(`favorite_${school.id}`)
+    if (savedFavorite === "true") {
+      setFavorited(true)
+      // Don't call onFavoriteToggle here - parent already loads favorites
+      // This prevents infinite loops from function recreation
+    }
+  }, [school.id])
+
+  // Update favorite status when prop changes
+  useEffect(() => {
+    setFavorited(isFavorited)
+  }, [isFavorited])
+
+  const handleVote = async (voteType: "upvote" | "downvote") => {
+    setIsVoting(true)
+    try {
+      // If clicking the same button, remove the vote (unlike/undownvote)
+      // If clicking different button, switch the vote
+      const newVote = userVote === voteType ? null : voteType
+
+      const response = await fetch(`/api/schools/${school.id}/vote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          voteType,
+          previousVote: userVote
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to submit vote")
+      }
+
+      const data = await response.json()
+      setVotes(data.votes)
+      setUserVote(newVote)
+
+      if (newVote) {
+        localStorage.setItem(`vote_${school.id}`, newVote)
+      } else {
+        localStorage.removeItem(`vote_${school.id}`)
+      }
+    } catch (error) {
+      console.error("Error submitting vote:", error)
+    } finally {
+      setIsVoting(false)
+    }
+  }
+
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newFavoriteState = !favorited
+    setFavorited(newFavoriteState)
+    
+    if (newFavoriteState) {
+      localStorage.setItem(`favorite_${school.id}`, "true")
+    } else {
+      localStorage.removeItem(`favorite_${school.id}`)
+    }
+    
+    onFavoriteToggle?.(school.id, newFavoriteState)
+  }
+
+  return (
+    <Card
+      className={cn(
+        "transition-all duration-200 hover:shadow-lg cursor-pointer group border-border bg-gradient-to-br from-card to-card/50",
+        isSelected && "ring-2 ring-primary shadow-lg border-primary/50"
+      )}
+      onClick={onSelect}
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start gap-2 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center shrink-0 group-hover:from-primary/20 group-hover:to-accent/20 transition-colors">
+                <span className="text-lg font-bold text-primary">
+                  {school.name.charAt(0)}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-foreground text-base leading-snug group-hover:text-primary transition-colors">
+                    {school.name}
+                  </h3>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={cn(
+                      "h-7 px-2 hover:bg-yellow-500/10",
+                      favorited && "bg-yellow-500/20 text-yellow-600"
+                    )}
+                    onClick={handleFavoriteToggle}
+                  >
+                    <Star className={cn(
+                      "w-4 h-4",
+                      favorited && "fill-current"
+                    )} />
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={cn(
+                        "h-7 px-2 hover:bg-success/10",
+                        userVote === "upvote" && "bg-success/20 text-success"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleVote("upvote")
+                      }}
+                      disabled={isVoting}
+                    >
+                      <ThumbsUp className={cn(
+                        "w-4 h-4",
+                        userVote === "upvote" && "fill-current"
+                      )} />
+                      <span className="ml-1 text-xs font-medium">{votes.upvotes}</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={cn(
+                        "h-7 px-2 hover:bg-destructive/10",
+                        userVote === "downvote" && "bg-destructive/20 text-destructive"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleVote("downvote")
+                      }}
+                      disabled={isVoting}
+                    >
+                      <ThumbsDown className={cn(
+                        "w-4 h-4",
+                        userVote === "downvote" && "fill-current"
+                      )} />
+                      <span className="ml-1 text-xs font-medium">{votes.downvotes}</span>
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      {school.city}, {school.state}
+                    </span>
+                  </div>
+                  {school.distance !== undefined && (
+                    <Badge variant="secondary" className="text-xs">
+                      {school.distance.toFixed(1)} mi
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className="text-xs">
+                    {school.policies.length} {school.policies.length === 1 ? 'Course' : 'Courses'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs mt-2">
+              {school.websiteUrl && (
+                <a
+                  href={school.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-1 font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Website
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+
+            </div>
+          </div>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsExpanded(!isExpanded)
+            }}
+            className="shrink-0 hover:bg-primary/10"
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t border-border animate-in slide-in-from-top" onClick={(e) => e.stopPropagation()}>
+            <SchoolDetails school={school} selectedCourses={selectedCourses} />
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
