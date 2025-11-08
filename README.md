@@ -13,13 +13,41 @@
   - You can click on the markers to view more details about each institution.
 
 ## How to run
-- Open a terminal in the project root and run:
-   - cd code
-   - npm install
-   - npm run dev
+- Open a terminal in the project node and run these:
+```bash
+# go into code directory (frontend)
+cd code
+
+# Install all packages
+npm install
+
+# Run the frontend
+n8n run dev
+```
+
+-Open another terminal as well and run these:
+```bash
+# go into the app directory (backend)
+cd app
+
+# install dependences
+npm i
+
+# Run the server (supabase database, doesn't work on jpmc wifi)
+npm run dev
+```
+
+-For the n8n workflow details are in the workflow folder inside code/workflow
+
 - Open http://localhost:3000 (or the port shown in the terminal).
 
 ## How to use?
 - Enter your state/zipcode to find colleges in the selected regions. 
 - Then, enter the CLEP exams and scores (if you have).
 - Based on your input, it provides a list of colleges/universities that accept CLEP credits in the region you selected.
+
+
+## AI usage
+
+- Used v0 for creating the basic page. Our prompt included our idea of design + the answers to the questions from the Q & A session
+- Used claude/copilot/cursor to iteratively help with feature bugs that arised and some UI components, 
