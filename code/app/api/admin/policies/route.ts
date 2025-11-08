@@ -9,19 +9,39 @@ export async function GET(request: NextRequest) {
         const searchParams = request.nextUrl.searchParams
         const universityId = searchParams.get("universityId")
 
+        console.log("GET /api/policies - universityId:", universityId)
+
         if (!universityId) {
             return NextResponse.json({ error: "University ID is required" }, { status: 400 })
         }
 
         //fetch school from backend
+        console.log("Fetching from backend:", `${BACKEND_URL}/api/schools/${universityId}`)
         const response = await fetch(`${BACKEND_URL}/api/schools/${universityId}`)
 
+        console.log("Backend response status:", response.status)
+
         if (!response.ok) {
+            const errorText = await response.text()
+            console.error("Backend error:", errorText)
             return NextResponse.json({ error: "University not found" }, { status: 404 })
         }
 
         const data = await response.json()
+        console.log("Backend data received:", JSON.stringify(data, null, 2))
 
+        //check if data structure is correct
+        if (!data.school) {
+            console.error("No school in data:", data)
+            return NextResponse.json({ policies: [] })
+        }
+
+        if (!data.school.policies) {
+            console.error("No policies in school:", data.school)
+            return NextResponse.json({ policies: [] })
+        }
+
+        console.log("Returning policies:", data.school.policies)
         return NextResponse.json({ policies: data.school.policies })
     } catch (error) {
         console.error("Get policies error:", error)

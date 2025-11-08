@@ -3,49 +3,17 @@ import { cookies } from "next/headers"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5001"
 
-//regex to validate .edu email addresses
-const EDU_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu$/
-
+//register endpoint
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
         const { username, email, password } = body
 
-        //validation
-        if (!username || !email || !password) {
-            return NextResponse.json(
-                { error: "Username, email, and password are required" },
-                { status: 400 }
-            )
-        }
-
-        if (username.length < 3) {
-            return NextResponse.json(
-                { error: "Username must be at least 3 characters long" },
-                { status: 400 }
-            )
-        }
-
-        //validate .edu email
-        if (!EDU_EMAIL_REGEX.test(email)) {
-            return NextResponse.json(
-                { error: "Please use a valid .edu email address from your university" },
-                { status: 400 }
-            )
-        }
-
-        if (password.length < 6) {
-            return NextResponse.json(
-                { error: "Password must be at least 6 characters long" },
-                { status: 400 }
-            )
-        }
-
         //call backend register endpoint
         const response = await fetch(`${BACKEND_URL}/api/register`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 username,
@@ -57,33 +25,28 @@ export async function POST(request: NextRequest) {
         const data = await response.json()
 
         if (!response.ok) {
-            return NextResponse.json(
-                { error: data.error || "Registration failed" },
-                { status: response.status }
-            )
+            return NextResponse.json({ error: data.error || "Registration failed" }, { status: response.status })
         }
+
+        //create response with user data
+        const frontendResponse = NextResponse.json({
+            message: data.message,
+            user: data.user,
+        })
 
         //store session token in http-only cookie
         const cookieStore = await cookies()
-        cookieStore.set('session_token', data.sessionToken, {
+        cookieStore.set("session_token", data.sessionToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
             maxAge: 60 * 60 * 24, //24 hours
-            path: '/',
+            path: "/",
         })
 
-        return NextResponse.json({
-            message: "Registration successful",
-            universityId: data.user.schoolId,
-            universityName: data.user.schoolName || data.user.username,
-            user: data.user,
-        })
+        return frontendResponse
     } catch (error) {
-        console.error("[Register] Error:", error)
-        return NextResponse.json(
-            { error: "Internal server error. Make sure backend is running on port 5001." },
-            { status: 500 }
-        )
+        console.error("Registration error:", error)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
 }

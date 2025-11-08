@@ -154,13 +154,13 @@ app.post('/api/login', async (req: Request<{}, {}, LoginBody>, res: Response) =>
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        //find user in database with school info
+        //find user in database with school info (search by username OR email)
         const userQuery = await pool.query(
             `SELECT u.id, u.username, u.email, u.password_hash, u.created_at, u.school_id,
                     s.name as school_name
              FROM users u
-             LEFT JOIN schools s ON u.school_id = s.id
-             WHERE u.username = $1`,
+                      LEFT JOIN schools s ON u.school_id = s.id
+             WHERE u.username = $1 OR u.email = $1`,
             [username]
         );
 
@@ -288,9 +288,18 @@ app.get('/api/profile', authenticateSession, async (req: AuthRequest, res: Respo
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        //get user details from database
+        //get user details WITH school information from database
         const userQuery = await pool.query(
-            'SELECT id, username, email, created_at FROM users WHERE id = $1',
+            `SELECT 
+                u.id, 
+                u.username, 
+                u.email, 
+                u.created_at,
+                u.school_id,
+                s.name as school_name
+             FROM users u
+             LEFT JOIN schools s ON u.school_id = s.id
+             WHERE u.id = $1`,
             [req.userId]
         );
 
@@ -299,9 +308,18 @@ app.get('/api/profile', authenticateSession, async (req: AuthRequest, res: Respo
             return res.status(404).json({ error: 'User not found' });
         }
 
-        //return user profile
+        const user = userQuery.rows[0];
+
+        //return user profile with school info
         res.json({
-            user: userQuery.rows[0]
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                created_at: user.created_at,
+                schoolId: user.school_id,  //add school_id as schoolId
+                schoolName: user.school_name  //add school_name as schoolName
+            }
         });
     } catch (error) {
         console.error('Profile fetch error:', error);

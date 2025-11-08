@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const body = await request.json()
         const { examId, minScore, courseCode, courseName, credits, isGeneralCredit, notes } = body
 
-        //get session token for authentication
+        //get session token from cookie
         const cookieStore = await cookies()
         const sessionToken = cookieStore.get('session_token')?.value
 
@@ -54,7 +54,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     try {
         const { id } = await params
 
-        //get session token for authentication
+        //get session token from cookie
         const cookieStore = await cookies()
         const sessionToken = cookieStore.get('session_token')?.value
 
@@ -71,7 +71,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         })
 
         if (!response.ok) {
-            return NextResponse.json({ error: "Failed to delete policy" }, { status: response.status })
+            const data = await response.json()
+            return NextResponse.json({ error: data.error || "Failed to delete policy" }, { status: response.status })
         }
 
         return NextResponse.json({ success: true })
