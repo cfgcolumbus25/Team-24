@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { Card } from "@/app/components/ui/card"
 import { Button } from "@/app/components/ui/button"
 import { Badge } from "@/app/components/ui/badge"
-import { ChevronDown, ChevronUp, ExternalLink, MapPin, ThumbsUp, ThumbsDown, Star } from "lucide-react"
+import { ChevronDown, ChevronUp, ExternalLink, MapPin, ThumbsUp, ThumbsDown, Star, Info } from "lucide-react"
 import { SchoolDetails } from "./school-details"
 import type { School, SelectedCourse } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
 interface SchoolCardProps {
   school: School
@@ -135,7 +136,22 @@ export function SchoolCard({
                       favorited && "fill-current"
                     )} />
                   </Button>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                        <Info 
+                          className="w-3.5 h-3.5 text-muted-foreground cursor-help hover:text-primary transition"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                          <p className="text-xs max-w-[180px]">
+                            Reliability of cutoff scores. 
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
                     <Button
                       size="sm"
                       variant="ghost"
