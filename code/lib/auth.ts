@@ -19,7 +19,7 @@ export async function getUniversityInfo(): Promise<UniversityInfo | null> {
         }
 
         return {
-            id: data.user.id.toString(),
+            id: data.user.schoolId?.toString(),
             name: data.user.username,
         }
     } catch (error) {

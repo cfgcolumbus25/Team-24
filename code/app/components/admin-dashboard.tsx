@@ -30,7 +30,9 @@ export function AdminDashboard() {
 
     const loadPolicies = async (universityId: string) => {
         try {
-            const response = await fetch(`/api/admin/policies?universityId=${universityId}`)
+            const response = await fetch(`/api/admin/policies?universityId=${universityId}`, {
+                credentials: "include", //added this
+            })
             if (response.ok) {
                 const data = await response.json()
                 setPolicies(data.policies)
@@ -66,6 +68,7 @@ export function AdminDashboard() {
             const response = await fetch(url, {
                 method: editingPolicy ? "PUT" : "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", //added this
                 body: JSON.stringify({
                     ...policy,
                     universityId: universityInfo.id,
@@ -90,6 +93,7 @@ export function AdminDashboard() {
         try {
             const response = await fetch(`/api/admin/policies/${policyId}`, {
                 method: "DELETE",
+                credentials: "include", //added this
             })
 
             if (response.ok) {
