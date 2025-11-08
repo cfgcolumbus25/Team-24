@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Header } from "./header"
 import { LocationFilter } from "./location-filter"
 import { CourseFilter } from "./course-filter"
@@ -14,6 +14,7 @@ export function CLEPPathFinder() {
   const [location, setLocation] = useState("")
   const [selectedCourses, setSelectedCourses] = useState<SelectedCourse[]>([])
   const [sortBy, setSortBy] = useState<SortOption>("distance")
+  const [allSchools, setAllSchools] = useState<School[]>([])
   const [filteredSchools, setFilteredSchools] = useState<School[]>([])
   const [centerCoords, setCenterCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null)
@@ -58,19 +59,48 @@ export function CLEPPathFinder() {
           }))
           .filter((school: School) => (school.distance ?? 0) <= 50)
 
-        setFilteredSchools(sortSchools(schoolsWithDistance, sortBy))
+        setAllSchools(schoolsWithDistance)
       }
     } else if (type === "state" && value.length === 2) {
       const schools = await fetchSchools(value)
-      setFilteredSchools(sortSchools(schools, sortBy))
+      setAllSchools(schools)
 
       if (schools.length > 0) {
         const avgLat = schools.reduce((sum: number, s: School) => sum + s.latitude, 0) / schools.length
         const avgLng = schools.reduce((sum: number, s: School) => sum + s.longitude, 0) / schools.length
         setCenterCoords({ lat: avgLat, lng: avgLng })
       }
+    } else {
+      // Clear schools when location is cleared
+      setAllSchools([])
+      setFilteredSchools([])
+      setCenterCoords(null)
     }
   }
+
+  // Filter schools based on selected courses and scores
+  const filterSchoolsByCourses = useMemo(() => {
+    return (schools: School[]): School[] => {
+      if (selectedCourses.length === 0) {
+        return schools
+      }
+
+      return schools.filter((school) => {
+        // Check if school accepts at least one of the selected courses with the user's score
+        return selectedCourses.some((course) => {
+          const policy = school.policies.find((p) => p.examId === course.examId)
+          // School accepts the course if it has a policy and user's score meets the requirement
+          return policy && course.score >= policy.minScore
+        })
+      })
+    }
+  }, [selectedCourses])
+
+  // Apply course filtering whenever allSchools or selectedCourses change
+  useEffect(() => {
+    const filtered = filterSchoolsByCourses(allSchools)
+    setFilteredSchools(sortSchools(filtered, sortBy))
+  }, [allSchools, filterSchoolsByCourses, sortBy])
 
   const getApproxCoordsFromZip = (zip: string): { lat: number; lng: number } | null => {
     const firstDigit = Number.parseInt(zip[0])
@@ -102,7 +132,7 @@ export function CLEPPathFinder() {
 
   const handleSortChange = (option: SortOption) => {
     setSortBy(option)
-    setFilteredSchools(sortSchools(filteredSchools, option))
+    // The useEffect will handle sorting when sortBy changes
   }
 
   return (
