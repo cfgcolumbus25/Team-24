@@ -24,7 +24,7 @@ export function CLEPPathFinder() {
   const [favoritedSchools, setFavoritedSchools] = useState<Set<number>>(new Set())
   const [isComparisonOpen, setIsComparisonOpen] = useState(false)
 
-  
+
   const fetchSchools = async (filterState?: string) => {
     setIsLoadingSchools(true)
     try {
@@ -95,14 +95,14 @@ export function CLEPPathFinder() {
         return selectedCourses.some((course) => {
           const policy = school.policies.find((p) => p.examId === course.examId)
           if (!policy) return false
-        
+
           // If no score provided, just check if school accepts the exam
           if (course.score === undefined) {
             return true
           }
-                  
-        // If score provided, check if it meets the minimum requirement
-        return course.score >= policy.minScore
+
+          // If score provided, check if it meets the minimum requirement
+          return course.score >= policy.minScore
 
         })
       })
@@ -126,8 +126,8 @@ export function CLEPPathFinder() {
     })
     setFavoritedSchools((prev) => {
       // Check if the Sets are equal
-      if (prev.size === favorites.size && 
-          Array.from(prev).every(id => favorites.has(id))) {
+      if (prev.size === favorites.size &&
+        Array.from(prev).every(id => favorites.has(id))) {
         return prev
       }
       return favorites
@@ -157,6 +157,12 @@ export function CLEPPathFinder() {
         // Check if school accepts at least one of the selected courses with the user's score
         const matchesFilter = selectedCourses.some((course) => {
           const policy = school.policies.find((p) => p.examId === course.examId)
+          if (!policy) return false
+
+          // If no score provided, just check if school accepts the exam
+          if (course.score === undefined) {
+            return true
+          }
           return policy && course.score >= policy.minScore
         })
 
