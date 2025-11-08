@@ -12,7 +12,7 @@ export interface CLEPExam {
 export interface SelectedCourse {
   examId: number
   examName: string
-  score: number
+  score?: number
 }
 
 export interface SchoolPolicy {
