@@ -51,9 +51,14 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Your CLEP Exams</h2>
+          {selectedCourses.length > 0 && (
+            <Badge variant="secondary" className="ml-1">
+              {selectedCourses.length}
+            </Badge>
+          )}
         </div>
         {!showAddForm && availableExams.length > 0 && (
-          <Button size="sm" onClick={() => setShowAddForm(true)} className="gap-1.5">
+          <Button size="sm" onClick={() => setShowAddForm(true)} className="gap-1.5 shadow-sm">
             <Plus className="w-4 h-4" />
             Add Exam
           </Button>
@@ -61,35 +66,63 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
       </div>
 
       {selectedCourses.length === 0 && !showAddForm && (
-        <p className="text-sm text-muted-foreground">
-          Add your CLEP exam scores to see which credits you qualify for at each institution.
-        </p>
+        <div className="p-4 rounded-lg border border-dashed border-border bg-muted/20 text-center">
+          <BookOpen className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+          <p className="text-sm text-muted-foreground">
+            Add your CLEP exam scores to see which credits you qualify for at each institution.
+          </p>
+        </div>
       )}
 
-      {selectedCourses.map((course) => (
-        <div
-          key={course.examId}
-          className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 border border-border"
-        >
-          <div>
-            <div className="font-medium text-sm text-foreground">{course.examName}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Score: {course.score}</div>
-          </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => handleRemoveCourse(course.examId)}
-            className="h-7 w-7 shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      ))}
+      <div className="space-y-2">
+        {selectedCourses.map((course, index) => {
+          const exam = CLEP_EXAMS.find((e) => e.id === course.examId)
+          return (
+            <div
+              key={course.examId}
+              className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-br from-secondary/50 to-secondary/30 border border-border hover:border-primary/40 hover:shadow-sm transition-all duration-200 group animate-in slide-in-from-top"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm text-foreground">{course.examName}</span>
+                    {exam && (
+                      <Badge variant="secondary" className="text-xs">
+                        {exam.category}
+                      </Badge>
+                    )}
+                  </div>
+                  <Badge variant="default" className="text-xs bg-primary">
+                    Score: {course.score}
+                  </Badge>
+                </div>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => handleRemoveCourse(course.examId)}
+                className="h-8 w-8 shrink-0 hover:bg-destructive/10 hover:text-destructive"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )
+        })}
+      </div>
 
       {showAddForm && (
-        <div className="space-y-3 p-4 rounded-lg border border-border bg-card">
+        <div className="space-y-4 p-4 rounded-lg border border-primary/20 bg-gradient-to-br from-card to-card/50 shadow-sm animate-in slide-in-from-top">
+          <div className="flex items-center gap-2 pb-2 border-b border-border">
+            <Plus className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm text-foreground">Add New Exam Score</h3>
+          </div>
+          
           <div>
-            <Label htmlFor="examSelect" className="text-sm">
+            <Label htmlFor="examSelect" className="text-sm font-medium text-foreground mb-2 flex items-center gap-1">
               CLEP Exam
             </Label>
             <Select value={selectedExamId} onValueChange={setSelectedExamId}>
@@ -99,10 +132,12 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
               <SelectContent>
                 {availableExams.map((exam) => (
                   <SelectItem key={exam.id} value={exam.id.toString()}>
-                    {exam.name}
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      {exam.category}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <span>{exam.name}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {exam.category}
+                      </Badge>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -110,8 +145,9 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
           </div>
 
           <div>
-            <Label htmlFor="scoreInput" className="text-sm">
-              Your Score (20-80)
+            <Label htmlFor="scoreInput" className="text-sm font-medium text-foreground mb-2 flex items-center justify-between">
+              <span>Your Score</span>
+              <span className="text-xs text-muted-foreground font-normal">(Range: 20-80)</span>
             </Label>
             <Input
               id="scoreInput"
@@ -125,8 +161,13 @@ export function CourseFilter({ selectedCourses, onCoursesChange }: CourseFilterP
             />
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={handleAddCourse} disabled={!selectedExamId || !score} className="flex-1">
+          <div className="flex gap-2 pt-2">
+            <Button 
+              onClick={handleAddCourse} 
+              disabled={!selectedExamId || !score} 
+              className="flex-1 shadow-sm"
+            >
+              <Plus className="w-4 h-4 mr-2" />
               Add Exam
             </Button>
             <Button variant="outline" onClick={() => setShowAddForm(false)}>
