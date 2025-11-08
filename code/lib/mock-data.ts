@@ -1,3 +1,21 @@
+/*TEMP FAKE DATA
+*
+*
+* WILL BE REPLACED BY THE DB
+*
+*
+* data rep:
+*   Uni, # of exams accepted, School CLEP website, address, city, state, zip,
+*       subtable-> exam, min score, credits, course name, isUpToDate?, upvotes, downvotes
+* tables:
+*   schools(id, name, # of exams accepted, School CLEP website, address, city, state, zip)
+*       //maybe leave static since it doesnt change a lot
+*       clep_exams(id, name, category)
+*   school_policies(id, exam, min score, credits, course name, isUpToDate, isGeneralCredit)
+*   votes(id, schoolId, voteType, user_ip(cookie), timestamp)
+*   users(id, university, email, password, role, created)
+* */
+
 import type { School } from "./types"
 
 export const mockSchools: School[] = [

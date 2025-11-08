@@ -1,3 +1,5 @@
+/*Data models*/
+
 export type LocationType = "zip" | "state"
 export type SortOption = "distance" | "alphabetical"
 
@@ -30,6 +32,7 @@ export interface School {
   id: number
   name: string
   address: string
+
   city: string
   state: string
   zip: string

@@ -1,3 +1,5 @@
+/*Unchanged reference data, no need to store in a Database*/
+
 import type { CLEPExam } from "./types"
 
 export const CLEP_EXAMS: CLEPExam[] = [
