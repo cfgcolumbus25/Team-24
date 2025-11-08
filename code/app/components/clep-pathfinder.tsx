@@ -19,6 +19,7 @@ export function CLEPPathFinder() {
   const [centerCoords, setCenterCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null)
   const [isLoadingSchools, setIsLoadingSchools] = useState(false)
+  const [favoritedSchools, setFavoritedSchools] = useState<Set<number>>(new Set())
 
   const fetchSchools = async (filterState?: string) => {
     setIsLoadingSchools(true)
@@ -102,6 +103,18 @@ export function CLEPPathFinder() {
     setFilteredSchools(sortSchools(filtered, sortBy))
   }, [allSchools, filterSchoolsByCourses, sortBy])
 
+  // Load favorited schools from localStorage on mount and when schools change
+  useEffect(() => {
+    const favorites = new Set<number>()
+    allSchools.forEach((school) => {
+      const savedFavorite = localStorage.getItem(`favorite_${school.id}`)
+      if (savedFavorite === "true") {
+        favorites.add(school.id)
+      }
+    })
+    setFavoritedSchools(favorites)
+  }, [allSchools])
+
   const getApproxCoordsFromZip = (zip: string): { lat: number; lng: number } | null => {
     const firstDigit = Number.parseInt(zip[0])
     // Rough approximation of US regions by ZIP code prefix
@@ -132,7 +145,18 @@ export function CLEPPathFinder() {
 
   const handleSortChange = (option: SortOption) => {
     setSortBy(option)
-    // The useEffect will handle sorting when sortBy changes
+  }
+
+  const handleFavoriteToggle = (schoolId: number, isFavorited: boolean) => {
+    setFavoritedSchools((prev) => {
+      const newSet = new Set(prev)
+      if (isFavorited) {
+        newSet.add(schoolId)
+      } else {
+        newSet.delete(schoolId)
+      }
+      return newSet
+    })
   }
 
   return (
@@ -159,6 +183,8 @@ export function CLEPPathFinder() {
               selectedSchoolId={selectedSchoolId}
               onSchoolSelect={setSelectedSchoolId}
               isLoading={isLoadingSchools}
+              // favoritedSchoolIds={favoritedSchools}
+              // onFavoriteToggle={handleFavoriteToggle}
             />
           </div>
         </div>
