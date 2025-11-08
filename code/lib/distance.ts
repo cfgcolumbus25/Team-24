@@ -1,6 +1,7 @@
 /**
  * This is used to calculate the nearest colleges to a User based on zip code.
  * Calculate distance between two coordinates using Haversine formula
+ *
  * @param lat1 Latitude of first point
  * @param lon1 Longitude of first point
  * @param lat2 Latitude of second point

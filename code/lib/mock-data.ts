@@ -1,4 +1,8 @@
-/**/
+/*TEMP FAKE DATA
+*
+*
+* WILL BE REPLACED BY THE DB
+* */
 
 import type { School } from "./types"
 
