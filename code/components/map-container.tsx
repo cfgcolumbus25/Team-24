@@ -1,8 +1,9 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useRef, useState } from "react"
 import { MapPin } from "lucide-react"
 import type { School } from "@/lib/types"
+import "leaflet/dist/leaflet.css"
 
 interface MapContainerProps {
   schools: School[]
@@ -13,155 +14,153 @@ interface MapContainerProps {
 }
 
 export function MapContainer({ schools, center, radius, selectedSchoolId, onSchoolSelect }: MapContainerProps) {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const markersRef = useRef<any[]>([])
+  const circleRef = useRef<any>(null)
+  const [isClient, setIsClient] = useState(false)
 
-  // Build the embed URL using Google Maps Embed API
-  // The Embed API supports: view, directions, place, search, streetview
-  // For multiple markers, we'll use a combination of view mode with search queries
-  const mapUrl = useMemo(() => {
-    if (!apiKey) return ""
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
-    // Calculate center point for the map
-    let mapCenter: { lat: number; lng: number }
-    let zoom: number
+  useEffect(() => {
+    if (!isClient || !mapRef.current) return
 
-    if (schools.length > 0) {
-      // If a school is selected, center on that school
-      if (selectedSchoolId) {
-        const selectedSchool = schools.find((s) => s.id === selectedSchoolId)
-        if (selectedSchool) {
-          mapCenter = { lat: selectedSchool.latitude, lng: selectedSchool.longitude }
-          zoom = 14
-          
-          // Use place mode for selected school to show marker
-          const searchQuery = encodeURIComponent(`${selectedSchool.name}, ${selectedSchool.city}, ${selectedSchool.state}`)
-          return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${searchQuery}&zoom=${zoom}`
-        }
-      }
+    // Dynamically import Leaflet only on client side
+    import("leaflet").then((L) => {
+      // Fix for default marker icons in Leaflet
+      delete (L.Icon.Default.prototype as any)._getIconUrl
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+      })
 
-      // Calculate average center from all schools
-      const avgLat = schools.reduce((sum, s) => sum + s.latitude, 0) / schools.length
-      const avgLng = schools.reduce((sum, s) => sum + s.longitude, 0) / schools.length
-      mapCenter = { lat: avgLat, lng: avgLng }
+      // Create custom icons for selected and unselected markers
+      const defaultIcon = new L.Icon({
+        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        tooltipAnchor: [16, -28],
+        shadowSize: [41, 41],
+      })
 
-      // Calculate zoom based on spread of schools
-      if (schools.length === 1) {
-        zoom = radius ? 12 : 10
-        const school = schools[0]
-        const searchQuery = encodeURIComponent(`${school.name}, ${school.city}, ${school.state}`)
-        return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${searchQuery}&zoom=${zoom}`
-      } else {
-        // Calculate bounding box to determine zoom
-        const lats = schools.map((s) => s.latitude)
-        const lngs = schools.map((s) => s.longitude)
-        const latDiff = Math.max(...lats) - Math.min(...lats)
-        const lngDiff = Math.max(...lngs) - Math.min(...lngs)
-        const maxDiff = Math.max(latDiff, lngDiff)
-        
-        if (maxDiff > 5) zoom = 6
-        else if (maxDiff > 2) zoom = 7
-        else if (maxDiff > 1) zoom = 8
-        else if (maxDiff > 0.5) zoom = 9
-        else if (maxDiff > 0.2) zoom = 10
-        else zoom = 11
+      const selectedIcon = new L.Icon({
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        tooltipAnchor: [16, -28],
+        shadowSize: [41, 41],
+      })
 
-        // For multiple schools, use view mode centered on average
-        // Note: Embed API doesn't easily show multiple custom markers
-        // We'll center on the area and users can see the general location
-        // Alternative: Use a search query with coordinates for one school as reference
-        const baseUrl = "https://www.google.com/maps/embed/v1/view"
-        const params = new URLSearchParams({
-          key: apiKey,
-          center: `${mapCenter.lat},${mapCenter.lng}`,
-          zoom: zoom.toString(),
+      // Initialize map only once
+      if (!mapInstanceRef.current && mapRef.current) {
+        const map = L.map(mapRef.current, {
+          center: [39.8283, -98.5795], // Center of US
+          zoom: 4,
+          zoomControl: true,
         })
-        return `${baseUrl}?${params.toString()}`
-      }
-    } else if (center) {
-      // No schools but we have a center point
-      const baseUrl = "https://www.google.com/maps/embed/v1/view"
-      const params = new URLSearchParams({
-        key: apiKey,
-        center: `${center.lat},${center.lng}`,
-        zoom: radius ? "10" : "6",
-      })
-      return `${baseUrl}?${params.toString()}`
-    } else {
-      // Default view - show United States
-      const baseUrl = "https://www.google.com/maps/embed/v1/view"
-      const params = new URLSearchParams({
-        key: apiKey,
-        center: "39.8283,-98.5795", // Center of USA
-        zoom: "4",
-      })
-      return `${baseUrl}?${params.toString()}`
-    }
-  }, [schools, center, radius, selectedSchoolId, apiKey])
 
-  if (!apiKey) {
-    return (
-      <div className="w-full h-full bg-muted relative flex items-center justify-center">
-        <div className="text-center p-6">
-          <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-          <p className="text-sm text-muted-foreground mb-2">Google Maps API key is required</p>
-          <p className="text-xs text-muted-foreground">
-            Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your .env.local file
-          </p>
-        </div>
-      </div>
-    )
-  }
+        // Add OpenStreetMap tiles
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+        }).addTo(map)
+
+        mapInstanceRef.current = map
+      }
+
+      const map = mapInstanceRef.current
+      if (!map) return
+
+      // Clear existing markers
+      markersRef.current.forEach((marker) => marker.remove())
+      markersRef.current = []
+
+      // Clear existing circle
+      if (circleRef.current) {
+        circleRef.current.remove()
+        circleRef.current = null
+      }
+
+      if (schools.length === 0 || !center) {
+        // Reset to default view
+        map.setView([39.8283, -98.5795], 4)
+        return
+      }
+
+      // Draw radius circle if specified
+      if (radius && center) {
+        const circle = L.circle([center.lat, center.lng], {
+          radius: radius * 1609.34, // Convert miles to meters
+          fillColor: "#3b82f6",
+          fillOpacity: 0.1,
+          color: "#3b82f6",
+          opacity: 0.3,
+          weight: 2,
+        }).addTo(map)
+        circleRef.current = circle
+      }
+
+      // Add school markers
+      schools.forEach((school) => {
+        const isSelected = selectedSchoolId === school.id
+        const marker = L.marker([school.latitude, school.longitude], {
+          icon: isSelected ? selectedIcon : defaultIcon,
+        }).addTo(map)
+
+        // Bind popup with school name
+        if (isSelected) {
+          marker.bindTooltip(school.name, {
+            permanent: true,
+            direction: "top",
+            className: "school-tooltip",
+          }).openTooltip()
+        }
+
+        // Add click handler
+        marker.on("click", () => {
+          onSchoolSelect(school.id)
+        })
+
+        markersRef.current.push(marker)
+      })
+
+      // Fit bounds to show all schools
+      if (schools.length > 0) {
+        const bounds = L.latLngBounds(schools.map((s) => [s.latitude, s.longitude]))
+        map.fitBounds(bounds, { padding: [50, 50] })
+      } else if (center) {
+        map.setView([center.lat, center.lng], 10)
+      }
+    })
+  }, [isClient, schools, center, radius, selectedSchoolId, onSchoolSelect])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+    }
+  }, [])
 
   return (
     <div className="w-full h-full bg-muted relative">
-      <iframe
-        key={mapUrl} // Force re-render when URL changes
-        width="100%"
-        height="100%"
-        style={{ border: 0 }}
-        loading="lazy"
-        allowFullScreen
-        referrerPolicy="no-referrer-when-downgrade"
-        src={mapUrl}
-        className="w-full h-full"
-        title="Schools Map"
-      />
-      
-      <div className="absolute top-4 left-4 bg-card border border-border rounded-lg px-3 py-2 shadow-lg z-10">
+      <div ref={mapRef} className="w-full h-full" />
+      <div className="absolute top-4 left-4 bg-card border border-border rounded-lg px-3 py-2 shadow-lg z-[1000]">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <MapPin className="w-3 h-3" />
-          <span>{schools.length} {schools.length === 1 ? "School" : "Schools"}</span>
+          <span>Interactive Map View - {schools.length} {schools.length === 1 ? "School" : "Schools"}</span>
         </div>
       </div>
-
-      {/* Show school quick-select buttons when multiple schools are available */}
-      {schools.length > 1 && schools.length <= 15 && (
-        <div className="absolute bottom-4 left-4 right-4 bg-card border border-border rounded-lg p-3 shadow-lg z-10 max-h-40 overflow-y-auto">
-          <div className="text-xs font-medium text-muted-foreground mb-2">View Schools:</div>
-          <div className="flex flex-wrap gap-2">
-            {schools.map((school) => {
-              const isSelected = selectedSchoolId === school.id
-              return (
-                <button
-                  key={school.id}
-                  onClick={() => {
-                    // Update map to show this school
-                    onSchoolSelect(school.id)
-                    // The mapUrl will update via useMemo when selectedSchoolId changes
-                  }}
-                  className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
-                    isSelected
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border hover:border-primary/50"
-                  }`}
-                >
-                  {school.name}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
