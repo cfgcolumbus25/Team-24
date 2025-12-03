@@ -50,4 +50,4 @@ npm run dev
 ## AI usage
 
 - Used v0 for creating the basic page. Our prompt included our idea of design + the answers to the questions from the Q & A session
-- Used claude/copilot/cursor to iteratively help with feature bugs that arised and some UI components, 
+- Used claude/copilot/cursor to iteratively help with feature bugs that arised and some UI components,  <br /> <br /> The code ("Code") in this repository was created solely by the student teams during a coding competition hosted by JPMorgan Chase Bank, N.A. ("JPMC"). JPMC did not create or contribute to the development of the Code. This Code is provided AS IS and JPMC makes no warranty of any kind, express or implied, as to the Code, including but not limited to, merchantability, satisfactory quality, non-infringement, title or fitness for a particular purpose or use.
